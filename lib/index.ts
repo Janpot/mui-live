@@ -9,8 +9,8 @@ import generator from "@babel/generator";
 import { types as t, traverse, template } from "@babel/core";
 
 function hasFileExtension(pathname: string): boolean {
-  const lastDotIndex = pathname.lastIndexOf(".");
-  return lastDotIndex >= -1 && lastDotIndex > pathname.lastIndexOf("/");
+  const filename = pathname.slice(pathname.lastIndexOf("/") + 1);
+  return filename.lastIndexOf(".") >= 1;
 }
 function createMatcher(pattern: string) {
   const isDirectoryMatch =
