@@ -8,9 +8,12 @@ import { ParseResult, parse } from "@babel/parser";
 import generatorMod from "@babel/generator";
 import { types as t, traverse, template } from "@babel/core";
 import * as prettier from "prettier";
+import { patchJsxElementAttributes } from "./patchJsxPath";
 
 let generator = generatorMod;
+// @ts-expect-error
 if (generatorMod.default) {
+  // @ts-expect-error
   generator = generatorMod.default;
 } else {
   console.log("you can remove the above polyfill");
@@ -111,6 +114,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
 
     configureServer(server) {
       server.hot.on("mui-live:save-properties", async (data, client) => {
+        console.log(data.patches);
         const nodeId = data.node;
         const node = nodeMap.get(nodeId);
         const module = node ? moduleMap.get(node?.module) : null;
@@ -120,37 +124,43 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           traverse(newAst, {
             JSXElement(elmPath) {
               if (elmPath.node.extra?.nodeId === nodeId) {
-                const attrs = elmPath.get("openingElement").get("attributes");
-                const props = { ...data.props };
+                if (data.patches) {
+                  patchJsxElementAttributes(elmPath, data.patches);
+                } else {
+                  const attrs = elmPath.get("openingElement").get("attributes");
+                  const props = { ...data.props };
 
-                // Update existing
-                attrs.forEach((attrPath) => {
-                  if (!attrPath.isJSXAttribute()) {
-                    return;
-                  }
-                  const attrName = attrPath.get("name").toString();
-                  if (Object.hasOwn(props, attrName)) {
-                    const value = props[attrName];
-                    attrPath
-                      .get("value")
-                      .replaceWith(
+                  // Update existing
+                  attrs.forEach((attrPath) => {
+                    if (!attrPath.isJSXAttribute()) {
+                      return;
+                    }
+                    const attrName = attrPath.get("name").toString();
+                    if (Object.hasOwn(props, attrName)) {
+                      const value = props[attrName];
+                      attrPath
+                        .get("value")
+                        .replaceWith(
+                          t.jsxExpressionContainer(buildAstLiteral(value))
+                        );
+                      delete props[attrName];
+                    }
+                  });
+
+                  // New attributes
+                  const newAttrs = Object.entries(props).map(
+                    ([name, value]) => {
+                      return t.jsxAttribute(
+                        t.jsxIdentifier(name),
                         t.jsxExpressionContainer(buildAstLiteral(value))
                       );
-                    delete props[attrName];
-                  }
-                });
-
-                // New attributes
-                const newAttrs = Object.entries(props).map(([name, value]) => {
-                  return t.jsxAttribute(
-                    t.jsxIdentifier(name),
-                    t.jsxExpressionContainer(buildAstLiteral(value))
+                    }
                   );
-                });
 
-                elmPath
-                  .get("openingElement")
-                  .pushContainer("attributes", newAttrs);
+                  elmPath
+                    .get("openingElement")
+                    .pushContainer("attributes", newAttrs);
+                }
               }
             },
           });
@@ -323,30 +333,14 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
             }
           }
 
-          elmPath.get("openingElement").pushContainer("attributes", [
-            t.jsxAttribute(
-              t.jsxIdentifier("data-mui-live-node-id"),
-              t.stringLiteral(nodeId)
-            ),
-            t.jsxSpreadAttribute(
-              attribute({
-                RUNTIME_NAME: runtimeIdentifier,
-                MODULE_ID: moduleIdIdentifier,
-                NODE_ID: t.stringLiteral(nodeId),
-                ATTRIBUTE_INFO: t.arrayExpression(
-                  attributesInfo.map((attr) =>
-                    attributeInfoEntry({
-                      NAME: attr.name
-                        ? t.stringLiteral(attr.name)
-                        : t.nullLiteral(),
-                      KIND: t.stringLiteral(attr.kind),
-                      VALUE: attr.value,
-                    })
-                  )
-                ),
-              })
-            ),
-          ]);
+          elmPath
+            .get("openingElement")
+            .pushContainer("attributes", [
+              t.jsxAttribute(
+                t.jsxIdentifier("data-mui-live-node-id"),
+                t.stringLiteral(nodeId)
+              ),
+            ]);
         },
       });
 

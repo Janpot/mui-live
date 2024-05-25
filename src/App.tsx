@@ -13,7 +13,16 @@ function App() {
     <Container>
       <Typography variant="h2">My app</Typography>
       <Box sx={{ height: 300 }}>
-        <DataGrid rows={ROWS} columns={[{ field: "id" }, { field: "name" }]} />
+        <DataGrid
+          rows={ROWS}
+          columns={[
+            {
+              field: "id",
+              type: "number",
+            },
+            { field: "name" },
+          ]}
+        />
       </Box>
     </Container>
   );
