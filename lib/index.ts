@@ -164,6 +164,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           const prettierConfig = await prettier.resolveConfig(module.id);
           newCode = await prettier.format(newCode, {
             parser: "babel",
+            filepath: module.id,
             ...prettierConfig,
           });
 
