@@ -5,8 +5,8 @@ import { MuiLive } from "@mui/live/runtime";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <MuiLive>
-      <App />
-    </MuiLive>
+    {/* <MuiLive> */}
+    <App />
+    {/*  </MuiLive> */}
   </React.StrictMode>
 );

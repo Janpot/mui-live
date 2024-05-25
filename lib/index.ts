@@ -4,9 +4,16 @@ import * as fs from "fs/promises";
 const { createHash } = await import("crypto");
 import { Plugin, ResolvedConfig } from "vite";
 import { Minimatch } from "minimatch";
-import { parse } from "@babel/parser";
-import generator from "@babel/generator";
+import { ParseResult, parse } from "@babel/parser";
+import generatorMod from "@babel/generator";
 import { types as t, traverse, template } from "@babel/core";
+
+let generator = generatorMod;
+if (generatorMod.default) {
+  generator = generatorMod.default;
+} else {
+  console.log("you can remove the above polyfill");
+}
 
 function hasFileExtension(pathname: string): boolean {
   const filename = pathname.slice(pathname.lastIndexOf("/") + 1);
@@ -92,7 +99,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       const contentHash = createHash("md5").update(source).digest("hex");
       console.log(contentHash);
 
-      const astIn = parse(source, {
+      const astIn: ParseResult<t.File> = parse(source, {
         sourceType: "module",
         plugins: ["jsx", "typescript"],
       });
