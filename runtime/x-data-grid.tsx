@@ -29,7 +29,7 @@ function ColumnEditor({ value, onChange }: ColumnEditorProps) {
   const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange?.({
       ...value,
-      type: event.target.value ?? undefined,
+      type: event.target.value || undefined,
     });
   };
   return (
