@@ -7,6 +7,7 @@ import { Minimatch } from "minimatch";
 import { ParseResult, parse } from "@babel/parser";
 import generatorMod from "@babel/generator";
 import { types as t, traverse, template } from "@babel/core";
+import * as prettier from "prettier";
 
 let generator = generatorMod;
 if (generatorMod.default) {
@@ -37,6 +38,54 @@ function createMatcher(pattern: string) {
   });
 }
 
+const moduleMap = new Map<
+  string,
+  {
+    id: string;
+    ast: t.File;
+    contentHash: string;
+  }
+>();
+
+const nodeMap = new Map<
+  string,
+  {
+    module: string;
+  }
+>();
+
+function buildAstLiteral(value: unknown): t.Expression {
+  if (typeof value === "string") {
+    return t.stringLiteral(value);
+  }
+
+  if (typeof value === "number") {
+    return t.numericLiteral(value);
+  }
+
+  if (typeof value === "boolean") {
+    return t.booleanLiteral(value);
+  }
+
+  if (Array.isArray(value)) {
+    return t.arrayExpression(value.map(buildAstLiteral));
+  }
+
+  if (value === null) {
+    return t.nullLiteral();
+  }
+
+  if (typeof value === "object") {
+    return t.objectExpression(
+      Object.entries(value).map(([key, value]) =>
+        t.objectProperty(t.stringLiteral(key), buildAstLiteral(value))
+      )
+    );
+  }
+
+  throw new Error("Unsupported value");
+}
+
 export interface LiveOptions {
   include?: string[];
 }
@@ -59,6 +108,72 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
 
   return {
     name: "mui-live",
+
+    configureServer(server) {
+      server.hot.on("mui-live:save-properties", async (data, client) => {
+        const nodeId = data.node;
+        const node = nodeMap.get(nodeId);
+        const module = node ? moduleMap.get(node?.module) : null;
+
+        if (module) {
+          const newAst = t.cloneNode(module.ast);
+          traverse(newAst, {
+            JSXElement(elmPath) {
+              if (elmPath.node.extra?.nodeId === nodeId) {
+                const attrs = elmPath.get("openingElement").get("attributes");
+                const props = { ...data.props };
+
+                // Update existing
+                attrs.forEach((attrPath) => {
+                  if (!attrPath.isJSXAttribute()) {
+                    return;
+                  }
+                  const attrName = attrPath.get("name").toString();
+                  if (Object.hasOwn(props, attrName)) {
+                    const value = props[attrName];
+                    attrPath
+                      .get("value")
+                      .replaceWith(
+                        t.jsxExpressionContainer(buildAstLiteral(value))
+                      );
+                    delete props[attrName];
+                  }
+                });
+
+                // New attributes
+                const newAttrs = Object.entries(props).map(([name, value]) => {
+                  return t.jsxAttribute(
+                    t.jsxIdentifier(name),
+                    t.jsxExpressionContainer(buildAstLiteral(value))
+                  );
+                });
+
+                elmPath
+                  .get("openingElement")
+                  .pushContainer("attributes", newAttrs);
+              }
+            },
+          });
+
+          const generated = generator(newAst, {
+            retainLines: true,
+          });
+
+          let newCode = generated.code;
+
+          const prettierConfig = await prettier.resolveConfig(module.id);
+          newCode = await prettier.format(newCode, {
+            parser: "babel",
+            ...prettierConfig,
+          });
+
+          await fs.writeFile(module.id, newCode);
+        }
+
+        // reply only to the client (if needed)
+        client.send("my:ack", { msg: "Hi! I got your message!" });
+      });
+    },
 
     config() {
       return {
@@ -97,11 +212,17 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       const source = await fs.readFile(id, "utf-8");
 
       const contentHash = createHash("md5").update(source).digest("hex");
-      console.log(contentHash);
 
       const astIn: ParseResult<t.File> = parse(source, {
         sourceType: "module",
+
         plugins: ["jsx", "typescript"],
+      });
+
+      moduleMap.set(id, {
+        id,
+        ast: astIn,
+        contentHash,
       });
 
       // Analysis
@@ -160,9 +281,10 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           }
         },
         JSXElement(elmPath) {
-          console.log(elmPath.node.extra);
           const nodeId = elmPath.node.extra?.nodeId;
           invariant(typeof nodeId === "string", "nodeId is not defined");
+
+          nodeMap.set(nodeId, { module: id });
 
           const attrsPath = elmPath.get("openingElement").get("attributes");
 
@@ -227,7 +349,9 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
         },
       });
 
-      const { code } = generator(astOut);
+      const { code } = generator(astOut, {
+        retainLines: true,
+      });
 
       return {
         code,

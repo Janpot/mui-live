@@ -1,6 +1,6 @@
 import * as React from "react";
 import { DataGrid } from "../runtime/x-data-grid";
-import { Container, Typography } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 
 const ROWS = [
   { id: 123, name: "Joaquin Sorolla" },
@@ -11,8 +11,13 @@ const ROWS = [
 function App() {
   return (
     <Container>
-      <Typography variant="h2">My MUI app</Typography>
-      <DataGrid rows={ROWS} columns={[{ field: "id" }, { field: "name" }]} />
+      <Typography variant="h2">My app</Typography>
+      <Box sx={{ height: 300 }}>
+        <DataGrid
+          rows={ROWS}
+          columns={[{ field: "id", type: "" }, { field: "name" }]}
+        />
+      </Box>
     </Container>
   );
 }
