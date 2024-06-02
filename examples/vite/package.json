@@ -18,7 +18,7 @@
     "invariant": "^2.2.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "mui-live": "workspace:*"
+    "mui-live": "0.0.0"
   },
   "devDependencies": {
     "@types/invariant": "^2.2.37",
