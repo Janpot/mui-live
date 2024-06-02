@@ -1,14 +1,16 @@
 {
   "compilerOptions": {
     "composite": true,
-    "module": "ESNext",
+    "module": "Node16",
     "target": "ES2022",
-    "moduleResolution": "Node",
+    "moduleResolution": "Node16",
     "allowSyntheticDefaultImports": true,
     "types": ["node"],
     "strict": true,
     "strictNullChecks": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "outDir": "dist/plugin"
   },
-  "include": ["."]
+  "include": ["src"]
 }

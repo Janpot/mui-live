@@ -4,43 +4,21 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --clearScreen=false",
-    "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "dev": "pnpm run -r dev",
+    "eslint": "eslint  ."
   },
   "dependencies": {
-    "@babel/core": "^7.24.6",
-    "@babel/generator": "^7.24.6",
-    "@babel/parser": "^7.24.6",
-    "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.5",
-    "@mui/icons-material": "^5.15.18",
-    "@mui/material": "^5.15.18",
-    "@mui/x-data-grid": "^6.20.0",
-    "invariant": "^2.2.4",
-    "just-diff": "^6.0.2",
-    "minimatch": "^9.0.4",
-    "prettier": "^3.2.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-error-boundary": "^4.0.13"
+    "@eslint/js": "^9.4.0"
   },
   "devDependencies": {
-    "@types/babel__core": "^7.20.5",
-    "@types/babel__generator": "^7.6.8",
-    "@types/invariant": "^2.2.37",
-    "@types/node": "^20.12.12",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.10.0",
     "@typescript-eslint/parser": "^7.10.0",
-    "@vitejs/plugin-react": "^4.3.0",
     "eslint": "^9.3.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
+    "prettier": "^3.2.5",
     "typescript": "next",
-    "vite": "^5.2.11"
+    "typescript-eslint": "^7.11.0"
   },
-  "packageManager": "pnpm@8.7.0"
+  "packageManager": "pnpm@9.1.3"
 }

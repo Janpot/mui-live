@@ -2,22 +2,15 @@ import invariant from "invariant";
 import * as path from "path";
 import * as fs from "fs/promises";
 const { createHash } = await import("crypto");
-import { Plugin, ResolvedConfig } from "vite";
+import type { Plugin, ResolvedConfig } from "vite";
 import { Minimatch } from "minimatch";
 import { ParseResult, parse } from "@babel/parser";
 import generatorMod from "@babel/generator";
 import { types as t, traverse, template } from "@babel/core";
 import * as prettier from "prettier";
-import { patchJsxElementAttributes } from "./patchJsxPath";
+import { patchJsxElementAttributes } from "./patchJsxPath.js";
 
-let generator = generatorMod;
-// @ts-expect-error
-if (generatorMod.default) {
-  // @ts-expect-error
-  generator = generatorMod.default;
-} else {
-  console.log("you can remove the above polyfill");
-}
+const generator = generatorMod.default;
 
 function hasFileExtension(pathname: string): boolean {
   const filename = pathname.slice(pathname.lastIndexOf("/") + 1);
@@ -190,7 +183,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       return {
         resolve: {
           alias: {
-            "@mui/live/runtime": path.resolve(__dirname, "../runtime"),
+            // "@mui/live/runtime": path.resolve(__dirname, "../runtime"),
           },
         },
       };
@@ -255,16 +248,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
         
         const MODULE_ID_NAME = MODULE_ID
         `,
-        { sourceType: "module" }
-      );
-
-      const attribute = template.expression(
-        `(() => { RUNTIME_NAME.onNodeRender(MODULE_ID, NODE_ID, ATTRIBUTE_INFO); return {} })()`,
-        { sourceType: "module" }
-      );
-
-      const attributeInfoEntry = template.expression(
-        `{ kind: KIND, name: NAME, value: VALUE }`,
         { sourceType: "module" }
       );
 

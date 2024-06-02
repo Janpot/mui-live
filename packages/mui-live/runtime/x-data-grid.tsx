@@ -71,7 +71,9 @@ export const DataGrid: React.ComponentType<MuiDataGridProps> = React.forwardRef<
   const [startInput, setStartInput] = React.useState(props);
   const [input, setInput] = React.useState(props);
 
-  const nodeId: unknown = (props as any)["data-mui-live-node-id"];
+  const nodeId: unknown = (props as Record<string, unknown>)[
+    "data-mui-live-node-id"
+  ];
 
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null

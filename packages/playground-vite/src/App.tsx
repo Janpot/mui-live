@@ -1,5 +1,4 @@
-import * as React from "react";
-import { DataGrid } from "../runtime/x-data-grid";
+import { DataGrid } from "mui-live/runtime/x-data-grid";
 import { Box, Container, Typography } from "@mui/material";
 
 const ROWS = [
@@ -18,7 +17,6 @@ function App() {
           columns={[
             {
               field: "id",
-              type: "number",
             },
             { field: "name" },
           ]}

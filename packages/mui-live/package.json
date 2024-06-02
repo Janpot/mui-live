@@ -1,0 +1,47 @@
+{
+  "name": "mui-live",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --build --watch --preserveWatchOutput",
+    "build": "tsc --build"
+  },
+  "dependencies": {
+    "@babel/core": "^7.24.6",
+    "@babel/generator": "^7.24.6",
+    "@babel/parser": "^7.24.6",
+    "@mui/icons-material": "^5.15.18",
+    "invariant": "^2.2.4",
+    "just-diff": "^6.0.2",
+    "minimatch": "^9.0.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-error-boundary": "^4.0.13"
+  },
+  "peerDependencies": {
+    "@mui/material": "^5.15.18",
+    "@mui/x-data-grid": "^6.20.0"
+  },
+  "devDependencies": {
+    "@mui/x-data-grid": "^6.20.0",
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__generator": "^7.6.8",
+    "@types/invariant": "^2.2.37",
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "next",
+    "vite": "^5.2.11"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js"
+    },
+    "./runtime/*": {
+      "types": "./dist/runtime/*.d.ts",
+      "import": "./dist/runtime/*.js"
+    }
+  },
+  "packageManager": "pnpm@8.7.0"
+}

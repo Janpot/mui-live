@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "composite": true
+  },
+  "references": [
+    { "path": "./tsconfig.plugin.json" },
+    { "path": "./tsconfig.runtime.json" }
+  ],
+  "include": []
+}

@@ -1,20 +1,14 @@
 {
   "compilerOptions": {
-    "paths": {
-      "@mui/live/runtime": ["./runtime"]
-    },
+    "composite": true,
     "target": "ES2020",
-    "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "skipLibCheck": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
     "jsx": "react-jsx",
 
     /* Linting */
@@ -22,8 +16,10 @@
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    "rootDir": "runtime",
+    "outDir": "dist/runtime"
   },
-  "include": ["src"],
-  "references": [{ "path": "./packages/mui-live/tsconfig.json" }]
+  "include": ["runtime"]
 }
