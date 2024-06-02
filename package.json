@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm run -r dev",
-    "eslint": "eslint  ."
+    "build": "pnpm run -r build",
+    "eslint": "eslint .",
+    "release": "pnpm dedupe && pnpm build && pnpm publish"
   },
   "dependencies": {
     "@eslint/js": "^9.4.0"
