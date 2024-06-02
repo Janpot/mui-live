@@ -7,7 +7,7 @@
     "dev": "pnpm run -r dev",
     "build": "pnpm run -r build",
     "eslint": "eslint .",
-    "release": "pnpm dedupe && pnpm build && pnpm publish -r"
+    "release": "pnpm install && pnpm build && pnpm publish -r"
   },
   "dependencies": {
     "@eslint/js": "^9.4.0"
