@@ -107,7 +107,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
 
     configureServer(server) {
       server.hot.on("mui-live:save-properties", async (data, client) => {
-        console.log(data.patches);
         const nodeId = data.node;
         const node = nodeMap.get(nodeId);
         const module = node ? moduleMap.get(node?.module) : null;
