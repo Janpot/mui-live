@@ -83,7 +83,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           traverse(newAst, {
             JSXElement(elmPath) {
               if (elmPath.node.extra?.nodeId === nodeId) {
-                console.log(data.patches);
                 patchJsxElementAttributes(elmPath, data.patches);
               }
             },
