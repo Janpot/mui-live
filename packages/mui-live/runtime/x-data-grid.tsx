@@ -1,6 +1,7 @@
 import * as React from "react";
 import {
   GridColDef,
+  GridColType,
   DataGrid as MuiDataGrid,
   DataGridProps as MuiDataGridProps,
 } from "@mui/x-data-grid";
@@ -32,7 +33,7 @@ function ColumnEditor({ value, onChange }: ColumnEditorProps) {
     if (!event.target.value) {
       delete newColumn.type;
     } else {
-      newColumn.type = event.target.value;
+      newColumn.type = event.target.value as GridColType;
     }
     onChange?.(newColumn);
   };
@@ -98,6 +99,7 @@ export const DataGrid: React.ComponentType<MuiDataGridProps> = React.forwardRef<
     invariant(typeof nodeId === "string", "nodeId is not defined");
     const patches = diff(startInput, input);
     saveNodeProperties(nodeId, patches);
+    setStartInput(input);
   };
 
   if (typeof nodeId !== "string") {
