@@ -92,10 +92,9 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
             retainLines: true,
           });
 
-          let newCode = generated.code;
-
           const prettierConfig = await prettier.resolveConfig(module.id);
-          newCode = await prettier.format(newCode, {
+
+          const newCode = await prettier.format(generated.code, {
             parser: "babel",
             filepath: module.id,
             ...prettierConfig,
