@@ -5,7 +5,7 @@ import type { Plugin, ResolvedConfig } from "vite";
 import { Minimatch } from "minimatch";
 import { parse } from "@babel/parser";
 import generatorMod from "@babel/generator";
-import { types as t, traverse } from "@babel/core";
+import { types as t, template, traverse } from "@babel/core";
 import * as prettier from "prettier";
 import { patchJsxElementAttributes } from "./patchJsxPath.js";
 
@@ -40,21 +40,12 @@ export interface LiveOptions {
 export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
   let config: ResolvedConfig | undefined;
 
-  let nextJsxNodeId = 1;
-
   const moduleMap = new Map<
     string,
     {
       id: string;
       ast: t.File;
       code: string;
-    }
-  >();
-
-  const nodeMap = new Map<
-    string,
-    {
-      module: string;
     }
   >();
 
@@ -74,9 +65,9 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
 
     configureServer(server) {
       server.hot.on("mui-live:save-properties", async (data, client) => {
-        const nodeId = data.node;
-        const node = nodeMap.get(nodeId);
-        const module = node ? moduleMap.get(node?.module) : null;
+        const moduleId = data.moduleId;
+        const nodeId = data.nodeId;
+        const module = moduleMap.get(moduleId);
 
         if (module) {
           const newAst = t.cloneNode(module.ast);
@@ -99,9 +90,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
             filepath: module.id,
             ...prettierConfig,
           });
-
-          module.ast = newAst;
-          module.code = newCode;
 
           await fs.writeFile(module.id, newCode);
         }
@@ -147,44 +135,56 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
 
       const source = await fs.readFile(id, "utf-8");
 
-      const existingModule = moduleMap.get(id);
+      const astIn = parse(source, {
+        sourceType: "module",
 
-      let astIn: t.File;
+        plugins: ["jsx", "typescript"],
+      });
 
-      if (existingModule && existingModule.code === source) {
-        astIn = existingModule.ast;
-      } else {
-        astIn = parse(source, {
-          sourceType: "module",
+      moduleMap.set(id, {
+        id,
+        ast: astIn,
+        code: source,
+      });
 
-          plugins: ["jsx", "typescript"],
-        });
+      let nextJsxNodeId = 1;
 
-        moduleMap.set(id, {
-          id,
-          ast: astIn,
-          code: source,
-        });
-
-        // Analysis
-        traverse(astIn, {
-          JSXElement(elmPath) {
-            const nodeId = "node-" + nextJsxNodeId++;
-            elmPath.node.extra ??= {};
-            elmPath.node.extra.nodeId = nodeId;
-          },
-        });
-      }
+      // Analysis
+      traverse(astIn, {
+        JSXElement(elmPath) {
+          const nodeId = "node-" + nextJsxNodeId++;
+          elmPath.node.extra ??= {};
+          elmPath.node.extra.nodeId = nodeId;
+        },
+      });
 
       const astOut = t.cloneNode(astIn);
 
+      const runtimeImport = template(`var MODULE_ID_NAME = MODULE_ID`, {
+        sourceType: "module",
+      });
+
+      let moduleIdIdentifier: t.Identifier | undefined;
+
       // Transformation
       traverse(astOut, {
+        Program(path) {
+          moduleIdIdentifier =
+            path.scope.generateUidIdentifier("muiLiveModuleId");
+
+          path.pushContainer(
+            "body",
+            runtimeImport({
+              MODULE_ID_NAME: moduleIdIdentifier,
+              MODULE_ID: t.stringLiteral(id),
+            })
+          );
+        },
         JSXElement(elmPath) {
+          invariant(moduleIdIdentifier, "moduleIdIdentifier is not defined");
+
           const nodeId = elmPath.node.extra?.nodeId;
           invariant(typeof nodeId === "string", "nodeId is not defined");
-
-          nodeMap.set(nodeId, { module: id });
 
           elmPath
             .get("openingElement")
@@ -192,6 +192,10 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
               t.jsxAttribute(
                 t.jsxIdentifier("data-mui-live-node-id"),
                 t.stringLiteral(nodeId)
+              ),
+              t.jsxAttribute(
+                t.jsxIdentifier("data-mui-live-module-id"),
+                t.jsxExpressionContainer(moduleIdIdentifier)
               ),
             ]);
         },

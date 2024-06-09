@@ -17,7 +17,6 @@ function App() {
           columns={[
             {
               field: "id",
-              type: "number",
             },
             { field: "name" },
           ]}

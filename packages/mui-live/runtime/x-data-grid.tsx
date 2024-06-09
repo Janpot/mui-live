@@ -72,6 +72,9 @@ export const DataGrid: React.ComponentType<MuiDataGridProps> = React.forwardRef<
   const [startInput, setStartInput] = React.useState(props);
   const [input, setInput] = React.useState(props);
 
+  const moduleId = (props as Record<string, unknown>)[
+    "data-mui-live-module-id"
+  ];
   const nodeId: unknown = (props as Record<string, unknown>)[
     "data-mui-live-node-id"
   ];
@@ -96,13 +99,14 @@ export const DataGrid: React.ComponentType<MuiDataGridProps> = React.forwardRef<
   const columns = input.columns || [];
 
   const handleSaveClick = () => {
+    invariant(typeof moduleId === "string", "moduleId is not defined");
     invariant(typeof nodeId === "string", "nodeId is not defined");
     const patches = diff(startInput, input);
-    saveNodeProperties(nodeId, patches);
+    saveNodeProperties(moduleId, nodeId, patches);
     setStartInput(input);
   };
 
-  if (typeof nodeId !== "string") {
+  if (typeof nodeId !== "string" || typeof moduleId !== "string") {
     console.log("@mui/live plugin didn't run");
     return <MuiDataGrid ref={ref} {...props} />;
   }
