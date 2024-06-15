@@ -39,6 +39,10 @@
       "types": "./dist/plugin/index.d.ts",
       "import": "./dist/plugin/index.js"
     },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js"
+    },
     "./runtime/*": {
       "types": "./dist/runtime/*.d.ts",
       "import": "./dist/runtime/*.js"

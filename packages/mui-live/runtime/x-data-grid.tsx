@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import Editicon from "@mui/icons-material/Edit";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
-import { saveNodeProperties } from ".";
+import { saveNodeProperties } from "./api";
 import invariant from "invariant";
 import { diff } from "just-diff";
 

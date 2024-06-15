@@ -33,6 +33,20 @@ function createMatcher(pattern: string) {
   });
 }
 
+function getTagName(
+  nameNode: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName
+): string {
+  if (t.isJSXIdentifier(nameNode)) {
+    return nameNode.name;
+  } else if (t.isJSXMemberExpression(nameNode)) {
+    return `${getTagName(nameNode.object)}.${nameNode.property}`;
+  } else if (t.isJSXNamespacedName(nameNode)) {
+    return `${nameNode.namespace}:${nameNode.name}`;
+  } else {
+    throw new Error("Unreachable code");
+  }
+}
+
 export interface LiveOptions {
   include?: string[];
 }
@@ -150,33 +164,89 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       let nextJsxNodeId = 1;
 
       // Analysis
+      const nodesInfo = new Map<string, { tagName: string }>();
+
       traverse(astIn, {
         JSXElement(elmPath) {
           const nodeId = "node-" + nextJsxNodeId++;
           elmPath.node.extra ??= {};
           elmPath.node.extra.nodeId = nodeId;
+
+          nodesInfo.set(nodeId, {
+            tagName: getTagName(elmPath.get("openingElement").get("name").node),
+          });
         },
       });
 
       const astOut = t.cloneNode(astIn);
 
-      const runtimeImport = template(`var MODULE_ID_NAME = MODULE_ID`, {
+      const runtimeImport = template(
+        `import * as RUNTIME_LOCAL_NAME from "mui-live/runtime";`,
+        {
+          sourceType: "module",
+        }
+      );
+
+      const moduleIdVar = template(`var MODULE_ID_NAME = MODULE_ID`, {
         sourceType: "module",
       });
 
+      const registerModuleCall = template(
+        `RUNTIME_LOCAL_NAME.registerModule({
+          id: MODULE_ID,
+          nodes: new Map(NODES)
+        })`,
+        {
+          sourceType: "module",
+        }
+      );
+
+      let runtimeLocalNameIdentifier: t.Identifier | undefined;
       let moduleIdIdentifier: t.Identifier | undefined;
 
       // Transformation
       traverse(astOut, {
         Program(path) {
+          runtimeLocalNameIdentifier =
+            path.scope.generateUidIdentifier("muiLiveRuntime");
           moduleIdIdentifier =
             path.scope.generateUidIdentifier("muiLiveModuleId");
 
-          path.pushContainer(
+          path.unshiftContainer(
             "body",
             runtimeImport({
+              RUNTIME_LOCAL_NAME: runtimeLocalNameIdentifier,
+            })
+          );
+
+          path.pushContainer(
+            "body",
+            moduleIdVar({
               MODULE_ID_NAME: moduleIdIdentifier,
               MODULE_ID: t.stringLiteral(id),
+            })
+          );
+
+          path.pushContainer(
+            "body",
+            registerModuleCall({
+              RUNTIME_LOCAL_NAME: runtimeLocalNameIdentifier,
+              MODULE_ID: moduleIdIdentifier,
+              NODES: t.newExpression(t.identifier("Map"), [
+                t.arrayExpression(
+                  Array.from(nodesInfo.entries(), ([nodeId, nodeInfo]) => {
+                    return t.arrayExpression([
+                      t.stringLiteral(nodeId),
+                      t.objectExpression([
+                        t.objectProperty(
+                          t.identifier("tagName"),
+                          t.stringLiteral(nodeInfo.tagName)
+                        ),
+                      ]),
+                    ]);
+                  })
+                ),
+              ]),
             })
           );
         },
