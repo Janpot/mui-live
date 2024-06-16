@@ -11,6 +11,7 @@
     "@babel/generator": "^7.24.6",
     "@babel/parser": "^7.24.6",
     "@mui/icons-material": "^5.15.19",
+    "@mui/x-tree-view": "^7.7.0",
     "invariant": "^2.2.4",
     "just-diff": "^6.0.2",
     "minimatch": "^9.0.4",

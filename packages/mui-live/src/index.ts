@@ -33,13 +33,13 @@ function createMatcher(pattern: string) {
   });
 }
 
-function getTagName(
+function getJsxTagName(
   nameNode: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName
 ): string {
   if (t.isJSXIdentifier(nameNode)) {
     return nameNode.name;
   } else if (t.isJSXMemberExpression(nameNode)) {
-    return `${getTagName(nameNode.object)}.${nameNode.property}`;
+    return `${getJsxTagName(nameNode.object)}.${nameNode.property}`;
   } else if (t.isJSXNamespacedName(nameNode)) {
     return `${nameNode.namespace}:${nameNode.name}`;
   } else {
@@ -164,7 +164,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       let nextJsxNodeId = 1;
 
       // Analysis
-      const nodesInfo = new Map<string, { tagName: string }>();
+      const nodesInfo = new Map<string, { jsxTagName: string }>();
 
       traverse(astIn, {
         JSXElement(elmPath) {
@@ -173,7 +173,9 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           elmPath.node.extra.nodeId = nodeId;
 
           nodesInfo.set(nodeId, {
-            tagName: getTagName(elmPath.get("openingElement").get("name").node),
+            jsxTagName: getJsxTagName(
+              elmPath.get("openingElement").get("name").node
+            ),
           });
         },
       });
@@ -239,8 +241,8 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
                       t.stringLiteral(nodeId),
                       t.objectExpression([
                         t.objectProperty(
-                          t.identifier("tagName"),
-                          t.stringLiteral(nodeInfo.tagName)
+                          t.identifier("jsxTagName"),
+                          t.stringLiteral(nodeInfo.jsxTagName)
                         ),
                       ]),
                     ]);

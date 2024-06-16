@@ -1,5 +1,5 @@
 export interface NodeInfo {
-  tagName: string;
+  jsxTagName: string;
 }
 
 export interface ModuleInfo {
