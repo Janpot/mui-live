@@ -2,7 +2,39 @@ import { Box } from "@mui/material";
 import invariant from "invariant";
 import * as React from "react";
 import { RichTreeView } from "@mui/x-tree-view/RichTreeView";
-import { modules, NodeInfo } from ".";
+import { modules, NodeInfo } from "./internal";
+
+function hash(str: string): string {
+  let hash = 0;
+  let i = 0;
+  while (i < str.length) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i++)) << 0;
+  }
+  return String(hash + 2147483647 + 1);
+}
+
+export interface PropertyInfo<P, K extends keyof P> {
+  Editor: React.ComponentType<{
+    value: P[K];
+    onChange?: (value: P[K]) => void;
+  }>;
+}
+
+export interface ComponentInfo<P = object> {
+  properties: {
+    [K in keyof P]?: PropertyInfo<P, K>;
+  };
+}
+
+export const components: Map<string | React.ComponentType, ComponentInfo> =
+  new Map();
+
+export function registerComponent<P>(
+  component: string | React.ComponentType<P>,
+  componentInfo: ComponentInfo<P>
+) {
+  components.set(component as React.ComponentType, componentInfo);
+}
 
 export interface EditorProps {
   children?: React.ReactNode;
@@ -15,14 +47,17 @@ interface HierarchyItem {
   children: HierarchyItem[];
 }
 
-const getItemId = (item: HierarchyItem) => `${item.moduleId}:${item.nodeId}`;
+const getItemId = (item: HierarchyItem) =>
+  hash(`${item.moduleId}:${item.nodeId}`);
 
 const getItemLabel = (item: HierarchyItem) => item.nodeInfo.jsxTagName;
 
-export default function Editor({ children }: EditorProps) {
+export function Editor({ children }: EditorProps) {
   const canvasRef = React.useRef<HTMLDivElement>(null);
   const [nodeTree, setNodeTree] = React.useState<HierarchyItem[]>([]);
-  const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = React.useState<string | null>(
+    null
+  );
 
   React.useEffect(() => {
     invariant(
@@ -78,6 +113,29 @@ export default function Editor({ children }: EditorProps) {
     return () => observer.disconnect();
   }, []);
 
+  const selectedItem = React.useMemo(() => {
+    if (!selectedItemId) {
+      return null;
+    }
+
+    const findItem = (items: HierarchyItem[]): HierarchyItem | null => {
+      for (const item of items) {
+        if (getItemId(item) === selectedItemId) {
+          return item;
+        }
+
+        const found = findItem(item.children);
+        if (found) {
+          return found;
+        }
+      }
+
+      return null;
+    };
+
+    return findItem(nodeTree);
+  }, [nodeTree, selectedItemId]);
+
   return (
     <Box
       sx={{
@@ -92,14 +150,16 @@ export default function Editor({ children }: EditorProps) {
           items={nodeTree}
           getItemId={getItemId}
           getItemLabel={getItemLabel}
-          selectedItems={selectedItem}
-          onSelectedItemsChange={(_event, item) => setSelectedItem(item)}
+          selectedItems={selectedItemId}
+          onSelectedItemsChange={(_event, item) => setSelectedItemId(item)}
         />
       </Box>
       <Box ref={canvasRef} sx={{ flex: 1, overflow: "auto" }}>
         {children}
       </Box>
-      <Box sx={{ width: 200 }}>Component {selectedItem}</Box>
+      <Box sx={{ width: 200 }}>
+        Component {selectedItem?.nodeInfo.jsxTagName}
+      </Box>
     </Box>
   );
 }

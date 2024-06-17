@@ -10,18 +10,20 @@ const ROWS = [
 function App() {
   return (
     <Container>
-      <Typography variant="h2">My app</Typography>
-      <Box sx={{ height: 300 }}>
-        <DataGrid
-          rows={ROWS}
-          columns={[
-            {
-              field: "id",
-            },
-            { field: "name" },
-          ]}
-        />
-      </Box>
+      <div>
+        <Typography variant="h2">My app</Typography>
+        <Box sx={{ height: 300 }}>
+          <DataGrid
+            rows={ROWS}
+            columns={[
+              {
+                field: "id",
+              },
+              { field: "name" },
+            ]}
+          />
+        </Box>
+      </div>
     </Container>
   );
 }

@@ -33,6 +33,42 @@ function createMatcher(pattern: string) {
   });
 }
 
+interface NodeInfo {
+  componentAst: t.Expression;
+  jsxTagName: string;
+}
+
+function toMemberExpression(
+  jsxMemberExpression: t.JSXMemberExpression
+): t.MemberExpression {
+  if (t.isJSXIdentifier(jsxMemberExpression.object)) {
+    return t.memberExpression(
+      t.identifier(jsxMemberExpression.object.name),
+      t.identifier(jsxMemberExpression.property.name)
+    );
+  }
+  return t.memberExpression(
+    toMemberExpression(jsxMemberExpression.object),
+    t.identifier(jsxMemberExpression.property.name)
+  );
+}
+
+function getComponentAst(
+  nameNode: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName
+): t.Expression {
+  if (t.isJSXIdentifier(nameNode)) {
+    return nameNode.name[0] === nameNode.name[0].toLowerCase()
+      ? t.stringLiteral(nameNode.name)
+      : t.identifier(nameNode.name);
+  } else if (t.isJSXMemberExpression(nameNode)) {
+    return toMemberExpression(nameNode);
+  } else if (t.isJSXNamespacedName(nameNode)) {
+    return t.nullLiteral();
+  } else {
+    throw new Error("Unreachable code");
+  }
+}
+
 function getJsxTagName(
   nameNode: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName
 ): string {
@@ -164,7 +200,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       let nextJsxNodeId = 1;
 
       // Analysis
-      const nodesInfo = new Map<string, { jsxTagName: string }>();
+      const nodesInfo = new Map<string, NodeInfo>();
 
       traverse(astIn, {
         JSXElement(elmPath) {
@@ -173,6 +209,9 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           elmPath.node.extra.nodeId = nodeId;
 
           nodesInfo.set(nodeId, {
+            componentAst: getComponentAst(
+              elmPath.get("openingElement").get("name").node
+            ),
             jsxTagName: getJsxTagName(
               elmPath.get("openingElement").get("name").node
             ),
@@ -183,7 +222,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       const astOut = t.cloneNode(astIn);
 
       const runtimeImport = template(
-        `import * as RUNTIME_LOCAL_NAME from "mui-live/runtime";`,
+        `import * as RUNTIME_LOCAL_NAME from "mui-live/runtime/internal";`,
         {
           sourceType: "module",
         }
@@ -243,6 +282,10 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
                         t.objectProperty(
                           t.identifier("jsxTagName"),
                           t.stringLiteral(nodeInfo.jsxTagName)
+                        ),
+                        t.objectProperty(
+                          t.identifier("component"),
+                          nodeInfo.componentAst
                         ),
                       ]),
                     ]);
