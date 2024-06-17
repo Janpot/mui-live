@@ -1,8 +1,11 @@
-import { Box } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import invariant from "invariant";
 import * as React from "react";
 import { RichTreeView } from "@mui/x-tree-view/RichTreeView";
 import { modules, NodeInfo } from "./internal";
+import { diff } from "just-diff";
+import { saveNodeProperties } from "./api";
+import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 
 function hash(str: string): string {
   let hash = 0;
@@ -51,6 +54,61 @@ const getItemId = (item: HierarchyItem) =>
   hash(`${item.moduleId}:${item.nodeId}`);
 
 const getItemLabel = (item: HierarchyItem) => item.nodeInfo.jsxTagName;
+
+const DEFAULT_COMPONENT_INFO: ComponentInfo = { properties: {} };
+
+function NodeEditor({ value }: { value: HierarchyItem }) {
+  const componentInfo: ComponentInfo =
+    (value?.nodeInfo.component
+      ? components.get(value.nodeInfo.component)
+      : null) ?? DEFAULT_COMPONENT_INFO;
+
+  const handleChange = (key: string) => (newFieldValue: unknown) => {
+    const newValue = { ...value, [key]: newFieldValue };
+    const patches = diff(value, newValue as any);
+    saveNodeProperties(value.moduleId, value.nodeId, patches);
+  };
+
+  return (
+    <Box sx={{ width: "100%", height: "100%" }}>
+      <Typography>Component {value.nodeInfo.jsxTagName}</Typography>
+      <Box>
+        {Array.from(
+          Object.entries(componentInfo.properties),
+          ([key, propertyInfo]) => {
+            const attributeValue = value.nodeInfo.attributes
+              .filter((attr) => attr.kind === "static")
+              .find((attr) => attr.name === key)?.value;
+
+            return (
+              <Box>
+                <Typography>{key}</Typography>
+                {propertyInfo.Editor ? (
+                  <propertyInfo.Editor
+                    value={attributeValue ?? null}
+                    onChange={handleChange(key)}
+                  />
+                ) : (
+                  <Typography>Editor not found</Typography>
+                )}
+              </Box>
+            );
+          }
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+function fallbackRender({ error }: FallbackProps) {
+  return (
+    <div role="alert">
+      <p>Something went wrong:</p>
+      <pre style={{ color: "red" }}>{error.message}</pre>
+      <Button disabled>Undo last change</Button>
+    </div>
+  );
+}
 
 export function Editor({ children }: EditorProps) {
   const canvasRef = React.useRef<HTMLDivElement>(null);
@@ -136,8 +194,6 @@ export function Editor({ children }: EditorProps) {
     return findItem(nodeTree);
   }, [nodeTree, selectedItemId]);
 
-  console.log(selectedItem);
-
   return (
     <Box
       sx={{
@@ -157,10 +213,12 @@ export function Editor({ children }: EditorProps) {
         />
       </Box>
       <Box ref={canvasRef} sx={{ flex: 1, overflow: "auto" }}>
-        {children}
+        <ErrorBoundary fallbackRender={fallbackRender} resetKeys={[nodeTree]}>
+          {children}
+        </ErrorBoundary>
       </Box>
       <Box sx={{ width: 200 }}>
-        Component {selectedItem?.nodeInfo.jsxTagName}
+        {selectedItem ? <NodeEditor value={selectedItem} /> : null}
       </Box>
     </Box>
   );

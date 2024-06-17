@@ -1,8 +1,23 @@
 import * as React from "react";
 
+export type AttributeInfo =
+  | {
+      kind: "static";
+      name: string;
+      value: unknown;
+    }
+  | {
+      kind: "dynamic";
+      name: string;
+    }
+  | {
+      kind: "spread";
+    };
+
 export interface NodeInfo {
   jsxTagName: string;
   component: string | React.ComponentType | null;
+  attributes: AttributeInfo[];
 }
 
 export interface ModuleInfo {

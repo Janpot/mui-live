@@ -56,6 +56,34 @@ function ColumnEditor({ value, onChange }: ColumnEditorProps) {
   );
 }
 
+export interface ColumnsEditorProps {
+  value: readonly GridColDef[] | null;
+  onChange?: (value: GridColDef[]) => void;
+}
+
+export function ColumnsEditor({ value, onChange }: ColumnsEditorProps) {
+  const handleChange = (newColumn: GridColDef) => {
+    const newColumns = (value ?? []).map((column) =>
+      column.field === newColumn.field ? newColumn : column
+    );
+    onChange?.(newColumns);
+  };
+
+  return (
+    <Box>
+      {Array.from(value ?? [], (column) => {
+        return (
+          <ColumnEditor
+            key={column.field}
+            value={column}
+            onChange={handleChange}
+          />
+        );
+      })}
+    </Box>
+  );
+}
+
 function fallbackRender({ error }: FallbackProps) {
   return (
     <div role="alert">
@@ -136,22 +164,12 @@ export const DataGrid: React.ComponentType<MuiDataGridProps> = React.forwardRef<
                 Save
               </Button>
             </Toolbar>
-            {Array.from(columns, (column) => {
-              return (
-                <ColumnEditor
-                  key={column.field}
-                  value={column}
-                  onChange={(value) => {
-                    setInput({
-                      ...input,
-                      columns: columns.map((col) =>
-                        col.field === column.field ? value : col
-                      ),
-                    });
-                  }}
-                />
-              );
-            })}
+            <ColumnsEditor
+              value={columns}
+              onChange={(newColumns) => {
+                setInput({ ...input, columns: newColumns });
+              }}
+            />
           </Box>
         </Popover>
       </Box>

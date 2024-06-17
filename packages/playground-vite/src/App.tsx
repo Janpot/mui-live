@@ -1,4 +1,4 @@
-import { DataGrid } from "mui-live/runtime/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
 import { Box, Container, Typography } from "@mui/material";
 
 const ROWS = [
@@ -15,12 +15,7 @@ function App() {
         <Box sx={{ height: 300 }}>
           <DataGrid
             rows={ROWS}
-            columns={[
-              {
-                field: "id",
-              },
-              { field: "name" },
-            ]}
+            columns={[{ field: "id", type: "number" }, { field: "name" }]}
           />
         </Box>
       </div>

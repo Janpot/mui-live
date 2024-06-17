@@ -2,12 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import { Editor, registerComponent } from "mui-live/runtime";
-import { DataGrid } from "mui-live/runtime/x-data-grid";
+import { ColumnsEditor } from "mui-live/runtime/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
 
 registerComponent(DataGrid, {
   properties: {
     columns: {
-      Editor: () => "columns editor",
+      Editor: ColumnsEditor,
     },
   },
 });
