@@ -136,6 +136,8 @@ export function Editor({ children }: EditorProps) {
     return findItem(nodeTree);
   }, [nodeTree, selectedItemId]);
 
+  console.log(selectedItem);
+
   return (
     <Box
       sx={{

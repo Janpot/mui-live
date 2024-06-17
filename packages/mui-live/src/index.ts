@@ -33,9 +33,24 @@ function createMatcher(pattern: string) {
   });
 }
 
+type AttributeInfo =
+  | {
+      kind: "static";
+      name: string;
+      valueAst: t.Expression;
+    }
+  | {
+      kind: "dynamic";
+      name: string;
+    }
+  | {
+      kind: "spread";
+    };
+
 interface NodeInfo {
   componentAst: t.Expression;
   jsxTagName: string;
+  attributesInfo: AttributeInfo[];
 }
 
 function toMemberExpression(
@@ -81,6 +96,54 @@ function getJsxTagName(
   } else {
     throw new Error("Unreachable code");
   }
+}
+
+function getStaticExpression(
+  expression: t.Node | null | undefined
+): t.Expression | null {
+  if (t.isJSXExpressionContainer(expression)) {
+    return getStaticExpression(expression.expression);
+  }
+  if (t.isStringLiteral(expression)) {
+    return expression;
+  }
+  if (t.isNumericLiteral(expression)) {
+    return expression;
+  }
+  if (t.isBooleanLiteral(expression)) {
+    return expression;
+  }
+  if (t.isNullLiteral(expression)) {
+    return expression;
+  }
+  if (t.isTemplateLiteral(expression)) {
+    const allPartsStatic = expression.quasis.every(
+      (part) => !!getStaticExpression(part)
+    );
+    return allPartsStatic ? expression : null;
+  }
+  if (t.isUnaryExpression(expression)) {
+    return !!getStaticExpression(expression.argument) &&
+      (expression.operator === "+" || expression.operator === "-")
+      ? expression
+      : null;
+  }
+  if (t.isObjectExpression(expression)) {
+    const allPropsStatic = expression.properties.every((property) => {
+      if (t.isObjectProperty(property)) {
+        return !!getStaticExpression(property.value);
+      }
+      return false;
+    });
+    return allPropsStatic ? expression : null;
+  }
+  if (t.isArrayExpression(expression)) {
+    const allItemsStatic = expression.elements.every(
+      (item) => !!getStaticExpression(item)
+    );
+    return allItemsStatic ? expression : null;
+  }
+  return null;
 }
 
 export interface LiveOptions {
@@ -208,10 +271,32 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           elmPath.node.extra ??= {};
           elmPath.node.extra.nodeId = nodeId;
 
+          const attributes = elmPath.get("openingElement").get("attributes");
+          const attributesInfo: AttributeInfo[] = attributes.map((attrPath) => {
+            if (attrPath.isJSXAttribute()) {
+              const nameNode = attrPath.get("name").node;
+              const name: string = t.isJSXIdentifier(nameNode)
+                ? nameNode.name
+                : nameNode.name.name;
+              const value = getStaticExpression(attrPath.get("value").node);
+
+              if (value) {
+                return { name, kind: "static", valueAst: t.cloneNode(value) };
+              } else {
+                return { name, kind: "dynamic" };
+              }
+            } else if (attrPath.isJSXSpreadAttribute()) {
+              return { kind: "spread" };
+            } else {
+              throw new Error("Unreachable code");
+            }
+          });
+
           nodesInfo.set(nodeId, {
             componentAst: getComponentAst(
               elmPath.get("openingElement").get("name").node
             ),
+            attributesInfo,
             jsxTagName: getJsxTagName(
               elmPath.get("openingElement").get("name").node
             ),
@@ -286,6 +371,36 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
                         t.objectProperty(
                           t.identifier("component"),
                           nodeInfo.componentAst
+                        ),
+                        t.objectProperty(
+                          t.identifier("attributes"),
+                          t.arrayExpression(
+                            nodeInfo.attributesInfo.map((attrInfo) => {
+                              return t.objectExpression([
+                                t.objectProperty(
+                                  t.identifier("kind"),
+                                  t.stringLiteral(attrInfo.kind)
+                                ),
+                                ...(attrInfo.kind === "static" ||
+                                attrInfo.kind === "dynamic"
+                                  ? [
+                                      t.objectProperty(
+                                        t.identifier("name"),
+                                        t.stringLiteral(attrInfo.name)
+                                      ),
+                                    ]
+                                  : []),
+                                ...(attrInfo.kind === "static"
+                                  ? [
+                                      t.objectProperty(
+                                        t.identifier("value"),
+                                        attrInfo.valueAst
+                                      ),
+                                    ]
+                                  : []),
+                              ]);
+                            })
+                          )
                         ),
                       ]),
                     ]);

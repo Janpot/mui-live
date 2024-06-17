@@ -1,3 +1,5 @@
+import * as React from "react";
+
 export interface NodeInfo {
   jsxTagName: string;
   component: string | React.ComponentType | null;
