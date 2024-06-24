@@ -87,9 +87,7 @@ export function readReactTree(elm: HTMLElement): readonly MuiLiveNode[] {
   walkFiberTree(elmFiber, {
     enter: (fiber) => {
       const props = (fiber as any).memoizedProps;
-
-      const nodeId = props?.["data-mui-live-node-id"];
-      const moduleId = props?.["data-mui-live-module-id"];
+      const { moduleId, nodeId } = props?.["data-live-node"] ?? {};
 
       if (typeof nodeId === "string" && typeof moduleId === "string") {
         const seenId = `${nodeId}-${moduleId}`;

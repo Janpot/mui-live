@@ -342,20 +342,10 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           moduleIdIdentifier =
             path.scope.generateUidIdentifier("muiLiveModuleId");
 
-          const firstNonImport = path.get("body").find((node) => {
-            return !node.isImportDeclaration();
+          path.scope.push({
+            id: moduleIdIdentifier,
+            init: t.stringLiteral(id),
           });
-
-          const moduleIdVarAst = moduleIdVar({
-            MODULE_ID_NAME: moduleIdIdentifier,
-            MODULE_ID: t.stringLiteral(id),
-          });
-
-          if (firstNonImport) {
-            firstNonImport.insertBefore(moduleIdVarAst);
-          } else {
-            path.unshiftContainer("body", moduleIdVarAst);
-          }
 
           path.unshiftContainer(
             "body",
@@ -427,16 +417,24 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           const nodeId = elmPath.node.extra?.nodeId;
           invariant(typeof nodeId === "string", "nodeId is not defined");
 
+          const programScope = elmPath.scope.getProgramParent();
+
+          const nodeInfoIdentifier = programScope.generateUidIdentifier(nodeId);
+
+          programScope.push({
+            id: nodeInfoIdentifier,
+            init: t.objectExpression([
+              t.objectProperty(t.identifier("nodeId"), t.stringLiteral(nodeId)),
+              t.objectProperty(t.identifier("moduleId"), moduleIdIdentifier),
+            ]),
+          });
+
           elmPath
             .get("openingElement")
             .pushContainer("attributes", [
               t.jsxAttribute(
-                t.jsxIdentifier("data-mui-live-node-id"),
-                t.stringLiteral(nodeId)
-              ),
-              t.jsxAttribute(
-                t.jsxIdentifier("data-mui-live-module-id"),
-                t.jsxExpressionContainer(moduleIdIdentifier)
+                t.jsxIdentifier("data-live-node"),
+                t.jsxExpressionContainer(nodeInfoIdentifier)
               ),
             ]);
         },
