@@ -17,6 +17,7 @@
     "minimatch": "^9.0.4",
     "prettier": "^3.3.0",
     "react": "^18.3.1",
+    "react-devtools-inline": "^5.2.0",
     "react-dom": "^18.3.1",
     "react-error-boundary": "^4.0.13"
   },
@@ -31,6 +32,7 @@
     "@types/invariant": "^2.2.37",
     "@types/node": "^20.13.0",
     "@types/react": "^18.3.3",
+    "@types/react-devtools-inline": "^4.24.8",
     "@types/react-dom": "^18.3.0",
     "typescript": "5.5.0-dev.20240602",
     "vite": "^5.2.12"

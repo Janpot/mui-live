@@ -6,6 +6,7 @@ import { modules, NodeInfo } from "./internal";
 import { diff } from "just-diff";
 import { saveNodeProperties } from "./api";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
+import { MuiLiveNode, readReactTree } from "./readReactTree";
 
 function hash(str: string): string {
   let hash = 0;
@@ -43,25 +44,17 @@ export interface EditorProps {
   children?: React.ReactNode;
 }
 
-interface HierarchyItem {
-  nodeInfo: NodeInfo;
-  moduleId: string;
-  nodeId: string;
-  children: HierarchyItem[];
-}
-
-const getItemId = (item: HierarchyItem) =>
+const getItemId = (item: MuiLiveNode) =>
   hash(`${item.moduleId}:${item.nodeId}`);
 
-const getItemLabel = (item: HierarchyItem) => item.nodeInfo.jsxTagName;
+const getItemLabel = (item: MuiLiveNode) => item.jsxTagName;
 
 const DEFAULT_COMPONENT_INFO: ComponentInfo = { properties: {} };
 
-function NodeEditor({ value }: { value: HierarchyItem }) {
+function NodeEditor({ value }: { value: MuiLiveNode }) {
   const componentInfo: ComponentInfo =
-    (value?.nodeInfo.component
-      ? components.get(value.nodeInfo.component)
-      : null) ?? DEFAULT_COMPONENT_INFO;
+    (value?.component ? components.get(value.component) : null) ??
+    DEFAULT_COMPONENT_INFO;
 
   const handleChange = (key: string) => (newFieldValue: unknown) => {
     const newValue = { ...value, [key]: newFieldValue };
@@ -71,17 +64,17 @@ function NodeEditor({ value }: { value: HierarchyItem }) {
 
   return (
     <Box sx={{ width: "100%", height: "100%" }}>
-      <Typography>Component {value.nodeInfo.jsxTagName}</Typography>
+      <Typography>Component {value.jsxTagName}</Typography>
       <Box>
         {Array.from(
           Object.entries(componentInfo.properties),
           ([key, propertyInfo]) => {
-            const attributeValue = value.nodeInfo.attributes
+            const attributeValue = value.attributes
               .filter((attr) => attr.kind === "static")
               .find((attr) => attr.name === key)?.value;
 
             return (
-              <Box>
+              <Box key={key}>
                 <Typography>{key}</Typography>
                 {propertyInfo.Editor ? (
                   <propertyInfo.Editor
@@ -112,7 +105,8 @@ function fallbackRender({ error }: FallbackProps) {
 
 export function Editor({ children }: EditorProps) {
   const canvasRef = React.useRef<HTMLDivElement>(null);
-  const [nodeTree, setNodeTree] = React.useState<HierarchyItem[]>([]);
+
+  const [nodeTree, setNodeTree] = React.useState<readonly MuiLiveNode[]>([]);
   const [selectedItemId, setSelectedItemId] = React.useState<string | null>(
     null
   );
@@ -123,44 +117,12 @@ export function Editor({ children }: EditorProps) {
       "canvasRef should be assigned to a div element"
     );
 
-    const findNodes = (elms: NodeListOf<ChildNode>): HierarchyItem[] => {
-      const nodes: HierarchyItem[] = [];
-
-      for (const elm of elms) {
-        if (elm instanceof HTMLElement) {
-          const moduleId = elm.getAttribute("data-mui-live-module-id");
-          const nodeId = elm.getAttribute("data-mui-live-node-id");
-
-          if (moduleId && nodeId) {
-            const nodeInfo = modules.get(moduleId)?.nodes.get(nodeId);
-            invariant(
-              nodeInfo,
-              "nodeInfo is not defined for %s in %s",
-              nodeId,
-              moduleId
-            );
-
-            nodes.push({
-              nodeInfo,
-              moduleId,
-              nodeId,
-              children: findNodes(elm.childNodes),
-            });
-          } else {
-            nodes.push(...findNodes(elm.childNodes));
-          }
-        }
-      }
-
-      return nodes;
-    };
-
     const observer = new MutationObserver(() => {
       invariant(
         canvasRef.current,
         "canvasRef should be assigned to a div element"
       );
-      setNodeTree(findNodes(canvasRef.current.childNodes));
+      setNodeTree(readReactTree(canvasRef.current));
     });
 
     observer.observe(canvasRef.current, {
@@ -176,7 +138,7 @@ export function Editor({ children }: EditorProps) {
       return null;
     }
 
-    const findItem = (items: HierarchyItem[]): HierarchyItem | null => {
+    const findItem = (items: readonly MuiLiveNode[]): MuiLiveNode | null => {
       for (const item of items) {
         if (getItemId(item) === selectedItemId) {
           return item;
@@ -213,7 +175,7 @@ export function Editor({ children }: EditorProps) {
         />
       </Box>
       <Box ref={canvasRef} sx={{ flex: 1, overflow: "auto" }}>
-        <ErrorBoundary fallbackRender={fallbackRender} resetKeys={[nodeTree]}>
+        <ErrorBoundary fallbackRender={fallbackRender}>
           {children}
         </ErrorBoundary>
       </Box>

@@ -19,7 +19,8 @@ registerComponent(Typography, {
     children: {
       Editor: ({ value, onChange }) => (
         <input
-          value={value ?? ""}
+          disabled={typeof value !== "string"}
+          value={typeof value === "string" ? value : undefined}
           onChange={(event) => onChange?.(event.target.value)}
         />
       ),

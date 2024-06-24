@@ -9,6 +9,12 @@ import { types as t, template, traverse } from "@babel/core";
 import * as prettier from "prettier";
 import { patchJsxElementAttributes } from "./patchJsxPath.js";
 
+// https://github.com/vitejs/vite/issues/9813
+declare global {
+  interface Worker {}
+  interface WebSocket {}
+}
+
 const generator = generatorMod.default;
 
 function hasFileExtension(pathname: string): boolean {
@@ -313,7 +319,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
         }
       );
 
-      const moduleIdVar = template(`var MODULE_ID_NAME = MODULE_ID`, {
+      const moduleIdVar = template(`const MODULE_ID_NAME = MODULE_ID`, {
         sourceType: "module",
       });
 
@@ -322,9 +328,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           id: MODULE_ID,
           nodes: new Map(NODES)
         })`,
-        {
-          sourceType: "module",
-        }
+        { sourceType: "module" }
       );
 
       let runtimeLocalNameIdentifier: t.Identifier | undefined;
@@ -338,18 +342,25 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           moduleIdIdentifier =
             path.scope.generateUidIdentifier("muiLiveModuleId");
 
+          const firstNonImport = path.get("body").find((node) => {
+            return !node.isImportDeclaration();
+          });
+
+          const moduleIdVarAst = moduleIdVar({
+            MODULE_ID_NAME: moduleIdIdentifier,
+            MODULE_ID: t.stringLiteral(id),
+          });
+
+          if (firstNonImport) {
+            firstNonImport.insertBefore(moduleIdVarAst);
+          } else {
+            path.unshiftContainer("body", moduleIdVarAst);
+          }
+
           path.unshiftContainer(
             "body",
             runtimeImport({
               RUNTIME_LOCAL_NAME: runtimeLocalNameIdentifier,
-            })
-          );
-
-          path.pushContainer(
-            "body",
-            moduleIdVar({
-              MODULE_ID_NAME: moduleIdIdentifier,
-              MODULE_ID: t.stringLiteral(id),
             })
           );
 
@@ -434,6 +445,8 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       const { code: codeOut } = generator(astOut, {
         retainLines: true,
       });
+
+      console.log(codeOut);
 
       return {
         code: codeOut,
