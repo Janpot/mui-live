@@ -2,6 +2,14 @@ import type { FiberNode, FiberRootNode } from "react-devtools-inline";
 import { AttributeInfo, modules } from "./internal";
 import invariant from "invariant";
 
+declare module "react-devtools-inline" {
+  interface FiberNode {
+    memoizedProps: Record<string, unknown>;
+  }
+
+  interface Source {}
+}
+
 interface FiberWalker {
   enter?: (node: FiberNode) => void;
   exit?: (node: FiberNode) => void;
@@ -64,6 +72,7 @@ export interface MuiLiveNode {
   children: MuiLiveNode[];
   jsxTagName: string;
   component: string | React.ComponentType | null;
+  props: Record<string, unknown>;
   attributes: AttributeInfo[];
 }
 
@@ -86,8 +95,11 @@ export function readReactTree(elm: HTMLElement): readonly MuiLiveNode[] {
   const seen = new Set<string>();
   walkFiberTree(elmFiber, {
     enter: (fiber) => {
-      const props = (fiber as any).memoizedProps;
-      const { moduleId, nodeId } = props?.["data-live-node"] ?? {};
+      const props = fiber.memoizedProps;
+      const { moduleId, nodeId } = (props?.["data-live-node"] ?? {}) as Record<
+        string,
+        string
+      >;
 
       if (typeof nodeId === "string" && typeof moduleId === "string") {
         const seenId = `${nodeId}-${moduleId}`;
@@ -111,6 +123,7 @@ export function readReactTree(elm: HTMLElement): readonly MuiLiveNode[] {
             outerElm: null,
             children: [],
             component: fiber.type,
+            props,
             ...nodeInfo,
           };
 

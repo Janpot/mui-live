@@ -69,9 +69,7 @@ function NodeEditor({ value }: { value: MuiLiveNode }) {
         {Array.from(
           Object.entries(componentInfo.properties),
           ([key, propertyInfo]) => {
-            const attributeValue = value.attributes
-              .filter((attr) => attr.kind === "static")
-              .find((attr) => attr.name === key)?.value;
+            const attributeValue = value.props[key];
 
             return (
               <Box key={key}>

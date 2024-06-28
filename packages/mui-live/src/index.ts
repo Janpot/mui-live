@@ -43,7 +43,6 @@ type AttributeInfo =
   | {
       kind: "static";
       name: string;
-      valueAst: t.Expression;
     }
   | {
       kind: "dynamic";
@@ -364,14 +363,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
                                       t.objectProperty(
                                         t.identifier("name"),
                                         t.stringLiteral(attrInfo.name)
-                                      ),
-                                    ]
-                                  : []),
-                                ...(attrInfo.kind === "static"
-                                  ? [
-                                      t.objectProperty(
-                                        t.identifier("value"),
-                                        attrInfo.valueAst
                                       ),
                                     ]
                                   : []),

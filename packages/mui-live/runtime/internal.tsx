@@ -2,7 +2,6 @@ export type AttributeInfo =
   | {
       kind: "static";
       name: string;
-      value: unknown;
     }
   | {
       kind: "dynamic";
