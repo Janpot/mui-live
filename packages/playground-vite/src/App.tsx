@@ -1,6 +1,5 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Container, Typography } from "@mui/material";
-import * as React from "react";
 
 const ROWS = [
   { id: 123, name: "Joaquin Sorolla" },
@@ -9,11 +8,10 @@ const ROWS = [
 ];
 
 function App() {
-  const ref = React.useRef(null);
   return (
     <Container>
-      <div ref={ref}>
-        <Typography variant="h2">My app</Typography>
+      <div>
+        <Typography variant="h3">Test</Typography>
         <Box sx={{ height: 300 }}>
           <DataGrid
             rows={ROWS}
