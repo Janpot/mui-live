@@ -1,5 +1,6 @@
 import { diff } from "just-diff";
 import { NodePath, types as t } from "@babel/core";
+import invariant from "invariant";
 
 type Patches = ReturnType<typeof diff>;
 
@@ -61,6 +62,33 @@ function findAttributeExpression(
   }
 
   return null;
+}
+
+function findOrCreateAttributeExpression(
+  path: NodePath<t.JSXElement>,
+  attrName: string
+): NodePath<t.Expression> {
+  const existing = findAttributeExpression(path, attrName);
+
+  if (existing) {
+    return existing;
+  }
+
+  const newAttribute = t.objectExpression([]);
+
+  path
+    .get("openingElement")
+    .pushContainer("attributes", [
+      t.jsxAttribute(
+        t.jsxIdentifier(attrName),
+        t.jsxExpressionContainer(newAttribute)
+      ),
+    ]);
+
+  const expression = findAttributeExpression(path, attrName);
+  invariant(expression, "Should find an object expression");
+
+  return expression;
 }
 
 function findProperty(
@@ -236,14 +264,22 @@ export function patchJsxElementAttributes(
   path: NodePath<t.JSXElement>,
   patches: Patches
 ) {
-  for (const patch of patches) {
+  console.log(patches);
+  for (let patch of patches) {
+    if (
+      (patch.op === "add" || patch.op === "replace") &&
+      patch.value === undefined
+    ) {
+      patch = { ...patch, op: "remove" };
+    }
+
     if (patch.op === "add" || patch.op === "replace") {
       const [attrName, ...jsonPath] = patch.path as (string | number)[];
       if (typeof attrName !== "string") {
         throw new Error("Expected string for jsx attribute name");
       }
 
-      const attrExpression = findAttributeExpression(path, attrName);
+      const attrExpression = findOrCreateAttributeExpression(path, attrName);
 
       if (!attrExpression) {
         throw new Error(`Attribute "${attrName}" not found`);

@@ -1,26 +1,7 @@
 import * as React from "react";
-import {
-  GridColDef,
-  GridColType,
-  DataGrid as MuiDataGrid,
-  DataGridProps as MuiDataGridProps,
-} from "@mui/x-data-grid";
+import { GridColDef, GridColType } from "@mui/x-data-grid";
 export * from "@mui/x-data-grid";
-import {
-  Box,
-  Button,
-  IconButton,
-  MenuItem,
-  Popover,
-  TextField,
-  Toolbar,
-  Typography,
-} from "@mui/material";
-import Editicon from "@mui/icons-material/Edit";
-import { ErrorBoundary, FallbackProps } from "react-error-boundary";
-import { saveNodeProperties } from "./api";
-import invariant from "invariant";
-import { diff } from "just-diff";
+import { Box, MenuItem, TextField, Typography } from "@mui/material";
 
 interface ColumnEditorProps {
   value: GridColDef;

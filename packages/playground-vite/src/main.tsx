@@ -5,6 +5,7 @@ import { Editor, registerComponent } from "mui-live/runtime";
 import { ColumnsEditor } from "mui-live/runtime/x-data-grid";
 import { DataGrid } from "@mui/x-data-grid";
 import { Typography } from "@mui/material";
+import StyleEditor from "mui-live/runtime/StyleEditor";
 
 registerComponent(DataGrid, {
   properties: {
@@ -24,6 +25,14 @@ registerComponent(Typography, {
           onChange={(event) => onChange?.(event.target.value)}
         />
       ),
+    },
+  },
+});
+
+registerComponent("div", {
+  properties: {
+    style: {
+      Editor: StyleEditor,
     },
   },
 });
