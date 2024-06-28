@@ -1,7 +1,7 @@
 import { Box, Button, Typography } from "@mui/material";
 import invariant from "invariant";
 import * as React from "react";
-import { RichTreeView } from "@mui/x-tree-view/RichTreeView";
+import { RichTreeView, RichTreeViewProps } from "@mui/x-tree-view/RichTreeView";
 import { diff } from "just-diff";
 import { saveNodeProperties } from "./api";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
@@ -153,6 +153,23 @@ export function Editor({ children }: EditorProps) {
     return findItem(nodeTree);
   }, [nodeTree, selectedItemId]);
 
+  const [expandedItemIds, setExpandedItemIds] = React.useState<string[] | null>(
+    null
+  );
+
+  React.useEffect(() => {
+    if (expandedItemIds || nodeTree.length <= 0) {
+      return;
+    }
+    const getDescendantIds = (tree: readonly MuiLiveNode[]): string[] => {
+      return tree.flatMap((item) => [
+        getItemId(item),
+        ...getDescendantIds(item.children),
+      ]);
+    };
+    setExpandedItemIds((existing) => existing || getDescendantIds(nodeTree));
+  }, [expandedItemIds, nodeTree]);
+
   return (
     <Box
       sx={{
@@ -169,6 +186,10 @@ export function Editor({ children }: EditorProps) {
           getItemLabel={getItemLabel}
           selectedItems={selectedItemId}
           onSelectedItemsChange={(_event, item) => setSelectedItemId(item)}
+          expandedItems={expandedItemIds ?? []}
+          onExpandedItemsChange={(_event: unknown, newItems: string[]) =>
+            setExpandedItemIds(newItems)
+          }
         />
       </Box>
       <Box ref={canvasRef} sx={{ flex: 1, overflow: "auto" }}>
