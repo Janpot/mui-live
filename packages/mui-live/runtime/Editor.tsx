@@ -2,7 +2,6 @@ import { Box, Button, Typography } from "@mui/material";
 import invariant from "invariant";
 import * as React from "react";
 import { RichTreeView } from "@mui/x-tree-view/RichTreeView";
-import { modules, NodeInfo } from "./internal";
 import { diff } from "just-diff";
 import { saveNodeProperties } from "./api";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";

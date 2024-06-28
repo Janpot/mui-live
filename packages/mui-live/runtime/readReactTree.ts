@@ -1,6 +1,5 @@
 import type { FiberNode, FiberRootNode } from "react-devtools-inline";
-import { AttributeInfo, modules } from "./internal";
-import invariant from "invariant";
+import { AttributeInfo, MuiLiveNodeAttribute } from "./internal";
 
 declare module "react-devtools-inline" {
   interface FiberNode {
@@ -96,35 +95,26 @@ export function readReactTree(elm: HTMLElement): readonly MuiLiveNode[] {
   walkFiberTree(elmFiber, {
     enter: (fiber) => {
       const props = fiber.memoizedProps;
-      const { moduleId, nodeId } = (props?.["data-live-node"] ?? {}) as Record<
-        string,
-        string
-      >;
+      const liveNodeAttribute = props?.["data-live-node"] as
+        | MuiLiveNodeAttribute
+        | undefined;
 
-      if (typeof nodeId === "string" && typeof moduleId === "string") {
+      if (liveNodeAttribute) {
+        const { moduleId, nodeId } = liveNodeAttribute;
+
         const seenId = `${nodeId}-${moduleId}`;
         if (!seen.has(seenId)) {
           seen.add(seenId);
-
-          const nodeInfo = modules.get(moduleId)?.nodes.get(nodeId);
-          invariant(
-            nodeInfo,
-            "nodeInfo should exist for %s %s",
-            moduleId,
-            nodeId
-          );
 
           const newNode = {
             id: seenId,
             parent: currentNode,
             fiber,
-            nodeId,
-            moduleId,
             outerElm: null,
             children: [],
             component: fiber.type,
             props,
-            ...nodeInfo,
+            ...liveNodeAttribute,
           };
 
           (currentNode?.children ?? root).push(newNode);

@@ -298,18 +298,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
         }
       );
 
-      const moduleIdVar = template(`const MODULE_ID_NAME = MODULE_ID`, {
-        sourceType: "module",
-      });
-
-      const registerModuleCall = template(
-        `RUNTIME_LOCAL_NAME.registerModule({
-          id: MODULE_ID,
-          nodes: new Map(NODES)
-        })`,
-        { sourceType: "module" }
-      );
-
       let runtimeLocalNameIdentifier: t.Identifier | undefined;
       let moduleIdIdentifier: t.Identifier | undefined;
 
@@ -332,51 +320,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
               RUNTIME_LOCAL_NAME: runtimeLocalNameIdentifier,
             })
           );
-
-          path.pushContainer(
-            "body",
-            registerModuleCall({
-              RUNTIME_LOCAL_NAME: runtimeLocalNameIdentifier,
-              MODULE_ID: moduleIdIdentifier,
-              NODES: t.newExpression(t.identifier("Map"), [
-                t.arrayExpression(
-                  Array.from(nodesInfo.entries(), ([nodeId, nodeInfo]) => {
-                    return t.arrayExpression([
-                      t.stringLiteral(nodeId),
-                      t.objectExpression([
-                        t.objectProperty(
-                          t.identifier("jsxTagName"),
-                          t.stringLiteral(nodeInfo.jsxTagName)
-                        ),
-                        t.objectProperty(
-                          t.identifier("attributes"),
-                          t.arrayExpression(
-                            nodeInfo.attributesInfo.map((attrInfo) => {
-                              return t.objectExpression([
-                                t.objectProperty(
-                                  t.identifier("kind"),
-                                  t.stringLiteral(attrInfo.kind)
-                                ),
-                                ...(attrInfo.kind === "static" ||
-                                attrInfo.kind === "dynamic"
-                                  ? [
-                                      t.objectProperty(
-                                        t.identifier("name"),
-                                        t.stringLiteral(attrInfo.name)
-                                      ),
-                                    ]
-                                  : []),
-                              ]);
-                            })
-                          )
-                        ),
-                      ]),
-                    ]);
-                  })
-                ),
-              ]),
-            })
-          );
         },
         JSXElement(elmPath) {
           invariant(moduleIdIdentifier, "moduleIdIdentifier is not defined");
@@ -388,11 +331,41 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
 
           const nodeInfoIdentifier = programScope.generateUidIdentifier(nodeId);
 
+          const nodeInfo = nodesInfo.get(nodeId);
+          nodeInfo?.attributesInfo;
+          invariant(nodeInfo, `No info found for node "${nodeId}"`);
+
           programScope.push({
             id: nodeInfoIdentifier,
             init: t.objectExpression([
               t.objectProperty(t.identifier("nodeId"), t.stringLiteral(nodeId)),
               t.objectProperty(t.identifier("moduleId"), moduleIdIdentifier),
+              t.objectProperty(
+                t.identifier("jsxTagName"),
+                t.stringLiteral(nodeInfo.jsxTagName)
+              ),
+              t.objectProperty(
+                t.identifier("attributes"),
+                t.arrayExpression(
+                  nodeInfo.attributesInfo.map((attrInfo) => {
+                    return t.objectExpression([
+                      t.objectProperty(
+                        t.identifier("kind"),
+                        t.stringLiteral(attrInfo.kind)
+                      ),
+                      ...(attrInfo.kind === "static" ||
+                      attrInfo.kind === "dynamic"
+                        ? [
+                            t.objectProperty(
+                              t.identifier("name"),
+                              t.stringLiteral(attrInfo.name)
+                            ),
+                          ]
+                        : []),
+                    ]);
+                  })
+                )
+              ),
             ]),
           });
 
