@@ -54,7 +54,6 @@ type AttributeInfo =
     };
 
 interface NodeInfo {
-  componentAst: t.Expression;
   jsxTagName: string;
   attributesInfo: AttributeInfo[];
 }
@@ -72,22 +71,6 @@ function toMemberExpression(
     toMemberExpression(jsxMemberExpression.object),
     t.identifier(jsxMemberExpression.property.name)
   );
-}
-
-function getComponentAst(
-  nameNode: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName
-): t.Expression {
-  if (t.isJSXIdentifier(nameNode)) {
-    return nameNode.name[0] === nameNode.name[0].toLowerCase()
-      ? t.stringLiteral(nameNode.name)
-      : t.identifier(nameNode.name);
-  } else if (t.isJSXMemberExpression(nameNode)) {
-    return toMemberExpression(nameNode);
-  } else if (t.isJSXNamespacedName(nameNode)) {
-    return t.nullLiteral();
-  } else {
-    throw new Error("Unreachable code");
-  }
 }
 
 function getJsxTagName(
@@ -299,9 +282,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           });
 
           nodesInfo.set(nodeId, {
-            componentAst: getComponentAst(
-              elmPath.get("openingElement").get("name").node
-            ),
             attributesInfo,
             jsxTagName: getJsxTagName(
               elmPath.get("openingElement").get("name").node
@@ -368,10 +348,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
                         t.objectProperty(
                           t.identifier("jsxTagName"),
                           t.stringLiteral(nodeInfo.jsxTagName)
-                        ),
-                        t.objectProperty(
-                          t.identifier("component"),
-                          nodeInfo.componentAst
                         ),
                         t.objectProperty(
                           t.identifier("attributes"),

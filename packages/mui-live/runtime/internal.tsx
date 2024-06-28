@@ -1,5 +1,3 @@
-import * as React from "react";
-
 export type AttributeInfo =
   | {
       kind: "static";
@@ -16,7 +14,6 @@ export type AttributeInfo =
 
 export interface NodeInfo {
   jsxTagName: string;
-  component: string | React.ComponentType | null;
   attributes: AttributeInfo[];
 }
 

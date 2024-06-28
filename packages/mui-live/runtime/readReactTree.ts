@@ -110,6 +110,7 @@ export function readReactTree(elm: HTMLElement): readonly MuiLiveNode[] {
             moduleId,
             outerElm: null,
             children: [],
+            component: fiber.type,
             ...nodeInfo,
           };
 
