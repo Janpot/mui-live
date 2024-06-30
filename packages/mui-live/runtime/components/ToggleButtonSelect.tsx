@@ -19,23 +19,26 @@ const PropControlToggleButtonGroup = styled(
     : {},
 }));
 
-export interface ToggleButtonSelectProps<T extends string = string>
-  extends ToggleButtonGroupProps {
+export interface ToggleButtonSelectProps<T> extends ToggleButtonGroupProps {
   label?: string;
-  options?: (T | { value: T; label?: string })[];
+  options?: T[];
   value?: T;
   onChange?: (event: React.MouseEvent, value: T) => void;
   disabled?: boolean;
   fullWidth?: boolean;
+  getValue?: (option: T) => string;
+  getLabel?: (option: T) => React.ReactNode;
 }
 
-function ToggleButtonSelect<T extends string = string>({
+function ToggleButtonSelect<T>({
   options,
   label,
   value,
   onChange,
   disabled,
   fullWidth,
+  getValue = (option: T) => String(option),
+  getLabel,
   ...rest
 }: ToggleButtonSelectProps<T>) {
   return (
@@ -52,10 +55,8 @@ function ToggleButtonSelect<T extends string = string>({
         {...rest}
       >
         {options?.map((option) => {
-          const optionValue =
-            typeof option === "string" ? option : option.value;
-          const optionLabel =
-            (typeof option === "string" ? option : option.label) || optionValue;
+          const optionValue = getValue(option);
+          const optionLabel = getLabel ? getLabel(option) : optionValue;
           return (
             <ToggleButton key={optionValue} value={optionValue}>
               {optionLabel}

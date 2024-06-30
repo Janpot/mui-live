@@ -1,6 +1,85 @@
 import { Stack } from "@mui/material";
 import * as React from "react";
 import ToggleButtonSelect from "./components/ToggleButtonSelect";
+import EastIcon from "@mui/icons-material/East";
+import WestIcon from "@mui/icons-material/West";
+import SouthIcon from "@mui/icons-material/South";
+import NorthIcon from "@mui/icons-material/North";
+import AlignHorizontalLeftIcon from "@mui/icons-material/AlignHorizontalLeft";
+import AlignHorizontalCenterIcon from "@mui/icons-material/AlignHorizontalCenter";
+import AlignHorizontalRightIcon from "@mui/icons-material/AlignHorizontalRight";
+import AlignVerticalBottom from "@mui/icons-material/AlignVerticalBottom";
+import AlignVerticalCenterIcon from "@mui/icons-material/AlignVerticalCenter";
+import AlignVerticalTop from "@mui/icons-material/AlignVerticalTop";
+
+type FlexDirection = NonNullable<React.CSSProperties["flexDirection"]>;
+
+const FLEX_DIRECTIONS: FlexDirection[] = [
+  "row",
+  "row-reverse",
+  "column",
+  "column-reverse",
+];
+
+function getFlexDirectionLabel(value: FlexDirection) {
+  switch (value) {
+    case "row":
+      return <EastIcon fontSize="small" />;
+    case "column":
+      return <SouthIcon fontSize="small" />;
+    case "row-reverse":
+      return <WestIcon fontSize="small" />;
+    case "column-reverse":
+      return <NorthIcon fontSize="small" />;
+    default:
+      throw new Error(`Unknown flex direction: ${value}`);
+  }
+}
+
+type AlignItems = NonNullable<React.CSSProperties["alignItems"]>;
+
+const ALIGN_ITEMS: AlignItems[] = ["flex-start", "center", "flex-end"];
+
+function getColumnAlignItemsLabel(value: AlignItems) {
+  switch (value) {
+    case "flex-start":
+      return <AlignHorizontalLeftIcon />;
+    case "center":
+      return <AlignHorizontalCenterIcon />;
+    case "flex-end":
+      return <AlignHorizontalRightIcon />;
+    default:
+      throw new Error(`Unknown align items: ${value}`);
+  }
+}
+
+function getRowAlignItemsLabel(value: AlignItems) {
+  switch (value) {
+    case "flex-start":
+      return <AlignVerticalTop />;
+    case "center":
+      return <AlignVerticalCenterIcon />;
+    case "flex-end":
+      return <AlignVerticalBottom />;
+    default:
+      throw new Error(`Unknown align items: ${value}`);
+  }
+}
+
+function getAlignItemsLabelGetter(
+  flexDirection: FlexDirection
+): (value: AlignItems) => React.ReactNode {
+  switch (flexDirection) {
+    case "row":
+    case "row-reverse":
+      return getRowAlignItemsLabel;
+    case "column":
+    case "column-reverse":
+      return getColumnAlignItemsLabel;
+    default:
+      throw new Error(`Unknown flex direction: ${flexDirection}`);
+  }
+}
 
 export interface StyleEditorProps {
   value: React.CSSProperties | undefined;
@@ -41,9 +120,20 @@ export default function StyleEditor({ value, onChange }: StyleEditorProps) {
           <ToggleButtonSelect
             label="flex-direction"
             value={value?.flexDirection ?? "row"}
-            options={["row", "column", "row-reverse", "column-reverse"]}
+            options={FLEX_DIRECTIONS}
+            getLabel={getFlexDirectionLabel}
             onChange={(event, flexDirection) =>
               handleChange("flexDirection", flexDirection, "row")
+            }
+            size="small"
+          />
+          <ToggleButtonSelect
+            label="align-items"
+            value={value?.alignItems ?? "row"}
+            options={ALIGN_ITEMS}
+            getLabel={getAlignItemsLabelGetter(value?.flexDirection ?? "row")}
+            onChange={(event, alignItems) =>
+              handleChange("alignItems", alignItems, "row")
             }
             size="small"
           />
