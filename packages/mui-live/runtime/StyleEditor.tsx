@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+import { Stack, styled } from "@mui/material";
 import * as React from "react";
 import ToggleButtonSelect from "./components/ToggleButtonSelect";
 import EastIcon from "@mui/icons-material/East";
@@ -11,6 +11,11 @@ import AlignHorizontalRightIcon from "@mui/icons-material/AlignHorizontalRight";
 import AlignVerticalBottom from "@mui/icons-material/AlignVerticalBottom";
 import AlignVerticalCenterIcon from "@mui/icons-material/AlignVerticalCenter";
 import AlignVerticalTop from "@mui/icons-material/AlignVerticalTop";
+import AlignVerticalStretchIcon from "@mui/icons-material/Height";
+
+const AlignHorizontalStretchIcon = styled(AlignVerticalStretchIcon)({
+  transform: "rotate(90deg)",
+});
 
 type FlexDirection = NonNullable<React.CSSProperties["flexDirection"]>;
 
@@ -38,7 +43,12 @@ function getFlexDirectionLabel(value: FlexDirection) {
 
 type AlignItems = NonNullable<React.CSSProperties["alignItems"]>;
 
-const ALIGN_ITEMS: AlignItems[] = ["flex-start", "center", "flex-end"];
+const ALIGN_ITEMS: AlignItems[] = [
+  "flex-start",
+  "center",
+  "flex-end",
+  "stretch",
+];
 
 function getColumnAlignItemsLabel(value: AlignItems) {
   switch (value) {
@@ -48,6 +58,8 @@ function getColumnAlignItemsLabel(value: AlignItems) {
       return <AlignHorizontalCenterIcon />;
     case "flex-end":
       return <AlignHorizontalRightIcon />;
+    case "stretch":
+      return <AlignHorizontalStretchIcon />;
     default:
       throw new Error(`Unknown align items: ${value}`);
   }
@@ -61,6 +73,8 @@ function getRowAlignItemsLabel(value: AlignItems) {
       return <AlignVerticalCenterIcon />;
     case "flex-end":
       return <AlignVerticalBottom />;
+    case "stretch":
+      return <AlignVerticalStretchIcon />;
     default:
       throw new Error(`Unknown align items: ${value}`);
   }
