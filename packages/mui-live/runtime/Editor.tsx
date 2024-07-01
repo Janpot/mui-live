@@ -90,6 +90,54 @@ function NodeEditor({ value }: { value: MuiLiveNode }) {
   );
 }
 
+interface SelectionBoxProps {
+  item: MuiLiveNode;
+}
+
+function SelectionBox({ item }: SelectionBoxProps) {
+  const selectionBoxRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const tgtElement = selectionBoxRef.current;
+    invariant(
+      tgtElement,
+      "selectionBoxRef should be assigned to a div element"
+    );
+
+    const srcElement = item.outerElm;
+
+    if (!srcElement) {
+      return () => {};
+    }
+
+    const observer = new ResizeObserver((x) => {
+      const relElm = tgtElement.parentElement;
+      invariant(relElm, "selectionbox should have a parent element");
+
+      const relRect = relElm.getBoundingClientRect();
+      const rect = srcElement.getBoundingClientRect();
+
+      tgtElement.style.left = `${rect.left - relRect.left}px`;
+      tgtElement.style.top = `${rect.top - relRect.top}px`;
+      tgtElement.style.width = `${rect.width}px`;
+      tgtElement.style.height = `${rect.height}px`;
+    });
+    observer.observe(srcElement);
+    return () => observer.disconnect();
+  }, [item.outerElm]);
+  return (
+    <Box
+      ref={selectionBoxRef}
+      sx={{
+        position: "absolute",
+        inset: "0 0 0 0",
+        border: "1px solid red",
+        boxSizing: "border-box",
+      }}
+    />
+  );
+}
+
 function fallbackRender({ error }: FallbackProps) {
   return (
     <div role="alert">
@@ -193,9 +241,22 @@ export function Editor({ children }: EditorProps) {
         />
       </Box>
       <Box ref={canvasRef} sx={{ flex: 1, overflow: "auto" }}>
-        <ErrorBoundary fallbackRender={fallbackRender}>
-          {children}
-        </ErrorBoundary>
+        <Box sx={{ position: "relative" }}>
+          <ErrorBoundary fallbackRender={fallbackRender}>
+            {children}
+          </ErrorBoundary>
+
+          <Box
+            sx={{
+              position: "absolute",
+              inset: "0 0 0 0",
+              overflow: "hidden",
+              pointerEvents: "none",
+            }}
+          >
+            {selectedItem ? <SelectionBox item={selectedItem} /> : null}
+          </Box>
+        </Box>
       </Box>
       <Box sx={{ width: 200 }}>
         {selectedItem ? <NodeEditor value={selectedItem} /> : null}
