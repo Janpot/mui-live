@@ -48,6 +48,9 @@ importers:
       '@babel/parser':
         specifier: ^7.24.6
         version: 7.24.6
+      '@mui/base':
+        specifier: 5.0.0-beta.40
+        version: 5.0.0-beta.40(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@mui/icons-material':
         specifier: ^5.15.19
         version: 5.15.19(@mui/material@5.15.19(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.3.1))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.3.1))(@types/react@18.3.3)(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.3)(react@18.3.1)

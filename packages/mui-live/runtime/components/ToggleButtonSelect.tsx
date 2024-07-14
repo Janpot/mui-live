@@ -7,7 +7,7 @@ import ToggleButtonGroup, {
 } from "@mui/material/ToggleButtonGroup";
 import { styled } from "@mui/material";
 
-const PropControlToggleButtonGroup = styled(
+const StyledToggleButtonGroup = styled(
   ToggleButtonGroup,
   {}
 )(({ fullWidth }) => ({
@@ -18,6 +18,15 @@ const PropControlToggleButtonGroup = styled(
       }
     : {},
 }));
+
+const StyledToggleButton = styled(
+  ToggleButton,
+  {}
+)({
+  fontSize: "0.75rem",
+  lineHeight: 1,
+  padding: 5,
+});
 
 export interface ToggleButtonSelectProps<T> extends ToggleButtonGroupProps {
   label?: string;
@@ -44,7 +53,7 @@ function ToggleButtonSelect<T>({
   return (
     <FormControl>
       <FormLabel>{label}</FormLabel>
-      <PropControlToggleButtonGroup
+      <StyledToggleButtonGroup
         color="primary"
         value={value}
         exclusive
@@ -58,12 +67,12 @@ function ToggleButtonSelect<T>({
           const optionValue = getValue(option);
           const optionLabel = getLabel ? getLabel(option) : optionValue;
           return (
-            <ToggleButton key={optionValue} value={optionValue}>
+            <StyledToggleButton key={optionValue} value={optionValue}>
               {optionLabel}
-            </ToggleButton>
+            </StyledToggleButton>
           );
         })}
-      </PropControlToggleButtonGroup>
+      </StyledToggleButtonGroup>
     </FormControl>
   );
 }

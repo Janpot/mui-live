@@ -1,4 +1,4 @@
-import { Stack, styled } from "@mui/material";
+import { Box, Stack, styled } from "@mui/material";
 import * as React from "react";
 import ToggleButtonSelect from "./components/ToggleButtonSelect";
 import EastIcon from "@mui/icons-material/East";
@@ -12,6 +12,8 @@ import AlignVerticalBottom from "@mui/icons-material/AlignVerticalBottom";
 import AlignVerticalCenterIcon from "@mui/icons-material/AlignVerticalCenter";
 import AlignVerticalTop from "@mui/icons-material/AlignVerticalTop";
 import AlignVerticalStretchIcon from "@mui/icons-material/Height";
+import BoxEditor from "./components/BoxEditor";
+import CssLengthEditor from "./components/CssLengthEditor";
 
 const AlignHorizontalStretchIcon = styled(AlignVerticalStretchIcon)({
   transform: "rotate(90deg)",
@@ -29,13 +31,13 @@ const FLEX_DIRECTIONS: FlexDirection[] = [
 function getFlexDirectionLabel(value: FlexDirection) {
   switch (value) {
     case "row":
-      return <EastIcon fontSize="small" />;
+      return <EastIcon fontSize="inherit" />;
     case "column":
-      return <SouthIcon fontSize="small" />;
+      return <SouthIcon fontSize="inherit" />;
     case "row-reverse":
-      return <WestIcon fontSize="small" />;
+      return <WestIcon fontSize="inherit" />;
     case "column-reverse":
-      return <NorthIcon fontSize="small" />;
+      return <NorthIcon fontSize="inherit" />;
     default:
       throw new Error(`Unknown flex direction: ${value}`);
   }
@@ -53,13 +55,13 @@ const ALIGN_ITEMS: AlignItems[] = [
 function getColumnAlignItemsLabel(value: AlignItems) {
   switch (value) {
     case "flex-start":
-      return <AlignHorizontalLeftIcon />;
+      return <AlignHorizontalLeftIcon fontSize="inherit" />;
     case "center":
-      return <AlignHorizontalCenterIcon />;
+      return <AlignHorizontalCenterIcon fontSize="inherit" />;
     case "flex-end":
-      return <AlignHorizontalRightIcon />;
+      return <AlignHorizontalRightIcon fontSize="inherit" />;
     case "stretch":
-      return <AlignHorizontalStretchIcon />;
+      return <AlignHorizontalStretchIcon fontSize="inherit" />;
     default:
       throw new Error(`Unknown align items: ${value}`);
   }
@@ -68,13 +70,13 @@ function getColumnAlignItemsLabel(value: AlignItems) {
 function getRowAlignItemsLabel(value: AlignItems) {
   switch (value) {
     case "flex-start":
-      return <AlignVerticalTop />;
+      return <AlignVerticalTop fontSize="inherit" />;
     case "center":
-      return <AlignVerticalCenterIcon />;
+      return <AlignVerticalCenterIcon fontSize="inherit" />;
     case "flex-end":
-      return <AlignVerticalBottom />;
+      return <AlignVerticalBottom fontSize="inherit" />;
     case "stretch":
-      return <AlignVerticalStretchIcon />;
+      return <AlignVerticalStretchIcon fontSize="inherit" />;
     default:
       throw new Error(`Unknown align items: ${value}`);
   }
@@ -103,12 +105,12 @@ export interface StyleEditorProps {
 export default function StyleEditor({ value, onChange }: StyleEditorProps) {
   const handleChange = function <K extends keyof React.CSSProperties>(
     property: K,
-    propertyValue: React.CSSProperties[K],
-    defaultPropertyValue: React.CSSProperties[K]
+    propertyValue: React.CSSProperties[K] | null,
+    defaultPropertyValue: React.CSSProperties[K] | null
   ) {
     let next: React.CSSProperties | undefined = { ...value };
 
-    if (propertyValue === defaultPropertyValue) {
+    if (propertyValue === null || propertyValue === defaultPropertyValue) {
       delete next[property];
     } else {
       next[property] = propertyValue;
@@ -153,6 +155,23 @@ export default function StyleEditor({ value, onChange }: StyleEditorProps) {
           />
         </>
       ) : null}
+      <BoxEditor label="margin/padding" value={value} onChange={onChange} />
+      <Box sx={{ mt: 1 }}>
+        <Stack direction="row" spacing={1}>
+          <CssLengthEditor
+            size="small"
+            label="width"
+            value={value?.width ?? null}
+            onChange={(width) => handleChange("width", width, null)}
+          />
+          <CssLengthEditor
+            size="small"
+            label="height"
+            value={value?.height ?? null}
+            onChange={(height) => handleChange("height", height, null)}
+          />
+        </Stack>
+      </Box>
     </Stack>
   );
 }

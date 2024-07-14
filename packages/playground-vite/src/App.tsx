@@ -10,9 +10,11 @@ const ROWS = [
 function App() {
   return (
     <Container>
-      <div style={{ display: "flex" }}>
+      <div
+        style={{ display: "flex", marginTop: null, flexDirection: "column" }}
+      >
         <Typography variant="h3">Test</Typography>
-        <Box sx={{ height: 300 }}>
+        <Box sx={{ height: 301 }}>
           <DataGrid
             rows={ROWS}
             columns={[{ field: "id", type: "number" }, { field: "name" }]}

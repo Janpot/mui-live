@@ -1,4 +1,10 @@
-import { Box, Button, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  ThemeProvider,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import invariant from "invariant";
 import * as React from "react";
 import { RichTreeView, RichTreeViewProps } from "@mui/x-tree-view/RichTreeView";
@@ -6,6 +12,8 @@ import { diff } from "just-diff";
 import { saveNodeProperties } from "./api";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { MuiLiveNode, readReactTree } from "./readReactTree";
+import CssLengthEditor from "./components/CssLengthEditor";
+import editorTheme from "./theme";
 
 function hash(str: string): string {
   let hash = 0;
@@ -218,49 +226,55 @@ export function Editor({ children }: EditorProps) {
     setExpandedItemIds((existing) => existing || getDescendantIds(nodeTree));
   }, [expandedItemIds, nodeTree]);
 
-  return (
-    <Box
-      sx={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        alignItems: "stretch",
-      }}
-    >
-      <Box sx={{ width: 200 }}>
-        <RichTreeView
-          items={nodeTree}
-          getItemId={getItemId}
-          getItemLabel={getItemLabel}
-          selectedItems={selectedItemId}
-          onSelectedItemsChange={(_event, item) => setSelectedItemId(item)}
-          expandedItems={expandedItemIds ?? []}
-          onExpandedItemsChange={(_event: unknown, newItems: string[]) =>
-            setExpandedItemIds(newItems)
-          }
-        />
-      </Box>
-      <Box ref={canvasRef} sx={{ flex: 1, overflow: "auto" }}>
-        <Box sx={{ position: "relative" }}>
-          <ErrorBoundary fallbackRender={fallbackRender}>
-            {children}
-          </ErrorBoundary>
+  const outerTheme = useTheme();
 
-          <Box
-            sx={{
-              position: "absolute",
-              inset: "0 0 0 0",
-              overflow: "hidden",
-              pointerEvents: "none",
-            }}
-          >
-            {selectedItem ? <SelectionBox item={selectedItem} /> : null}
+  return (
+    <ThemeProvider theme={editorTheme}>
+      <Box
+        sx={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "stretch",
+        }}
+      >
+        <Box sx={{ width: 200 }}>
+          <RichTreeView
+            items={nodeTree}
+            getItemId={getItemId}
+            getItemLabel={getItemLabel}
+            selectedItems={selectedItemId}
+            onSelectedItemsChange={(_event, item) => setSelectedItemId(item)}
+            expandedItems={expandedItemIds ?? []}
+            onExpandedItemsChange={(_event: unknown, newItems: string[]) =>
+              setExpandedItemIds(newItems)
+            }
+          />
+        </Box>
+        <Box ref={canvasRef} sx={{ flex: 1, overflow: "auto" }}>
+          <Box sx={{ position: "relative" }}>
+            <ThemeProvider theme={outerTheme}>
+              <ErrorBoundary fallbackRender={fallbackRender}>
+                {children}
+              </ErrorBoundary>
+            </ThemeProvider>
+
+            <Box
+              sx={{
+                position: "absolute",
+                inset: "0 0 0 0",
+                overflow: "hidden",
+                pointerEvents: "none",
+              }}
+            >
+              {selectedItem ? <SelectionBox item={selectedItem} /> : null}
+            </Box>
           </Box>
         </Box>
+        <Box sx={{ width: 200 }}>
+          {selectedItem ? <NodeEditor value={selectedItem} /> : null}
+        </Box>
       </Box>
-      <Box sx={{ width: 200 }}>
-        {selectedItem ? <NodeEditor value={selectedItem} /> : null}
-      </Box>
-    </Box>
+    </ThemeProvider>
   );
 }
