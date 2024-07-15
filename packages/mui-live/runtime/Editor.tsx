@@ -63,8 +63,25 @@ function NodeEditor({ value }: { value: MuiLiveNode }) {
     (value?.component ? components.get(value.component) : null) ??
     DEFAULT_COMPONENT_INFO;
 
+  const [windowFocused, setWindowFocused] = React.useState(true);
+  React.useEffect(() => {
+    const onFocus = () => setWindowFocused(true);
+    const onBlur = () => setWindowFocused(false);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, []);
+
   const [inputProps, setInputProps] = React.useState(value.props);
   React.useEffect(() => {
+    if (windowFocused) {
+      // for now we assume these are changes from the outside
+      // for the future we need a better way to detect saved changes have been committed or not
+      return;
+    }
     setInputProps(value.props);
   }, [value.props]);
 
