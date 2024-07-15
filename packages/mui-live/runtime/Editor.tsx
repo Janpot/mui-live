@@ -63,10 +63,16 @@ function NodeEditor({ value }: { value: MuiLiveNode }) {
     (value?.component ? components.get(value.component) : null) ??
     DEFAULT_COMPONENT_INFO;
 
+  const [inputProps, setInputProps] = React.useState(value.props);
+  React.useEffect(() => {
+    setInputProps(value.props);
+  }, [value.props]);
+
   const handleChange = (key: string) => (newFieldValue: unknown) => {
-    const newValue = { ...value, [key]: newFieldValue };
-    const patches = diff(value, newValue as any);
+    const newProps = { ...inputProps, [key]: newFieldValue };
+    const patches = diff(inputProps, newProps);
     saveNodeProperties(value.moduleId, value.nodeId, patches);
+    setInputProps(newProps);
   };
 
   return (
@@ -76,7 +82,7 @@ function NodeEditor({ value }: { value: MuiLiveNode }) {
         {Array.from(
           Object.entries(componentInfo.properties),
           ([key, propertyInfo]) => {
-            const attributeValue = value.props[key];
+            const attributeValue = inputProps[key];
 
             return (
               <Box key={key}>
