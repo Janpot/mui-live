@@ -78,8 +78,7 @@ function NodeEditor({ value }: { value: MuiLiveNode }) {
   const [inputProps, setInputProps] = React.useState(value.props);
   React.useEffect(() => {
     if (windowFocused) {
-      // for now we assume these are changes from the outside
-      // for the future we need a better way to detect saved changes have been committed or not
+      // for the future we need a better way to ignore incoming changes while the user is editing
       return;
     }
     setInputProps(value.props);
