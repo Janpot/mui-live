@@ -1,19 +1,22 @@
 import {
   Box,
   Button,
+  SxProps,
   ThemeProvider,
   Typography,
   useTheme,
 } from "@mui/material";
 import invariant from "invariant";
 import * as React from "react";
-import { RichTreeView, RichTreeViewProps } from "@mui/x-tree-view/RichTreeView";
+import { RichTreeView } from "@mui/x-tree-view/RichTreeView";
 import { diff } from "just-diff";
-import { saveNodeProperties } from "./api";
+
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { MuiLiveNode, readReactTree } from "./readReactTree";
-import CssLengthEditor from "./components/CssLengthEditor";
 import editorTheme from "./theme";
+import Browser from "./components/BrowerFrame";
+
+const BROWSER = true;
 
 function hash(str: string): string {
   let hash = 0;
@@ -49,6 +52,7 @@ export function registerComponent<P>(
 
 export interface EditorProps {
   children?: React.ReactNode;
+  sx?: SxProps;
 }
 
 const getItemId = (item: MuiLiveNode) =>
@@ -58,7 +62,17 @@ const getItemLabel = (item: MuiLiveNode) => item.jsxTagName;
 
 const DEFAULT_COMPONENT_INFO: ComponentInfo = { properties: {} };
 
-function NodeEditor({ value }: { value: MuiLiveNode }) {
+function NodeEditor({
+  value,
+  saveNodeProperties,
+}: {
+  value: MuiLiveNode;
+  saveNodeProperties: (
+    moduleId: string,
+    nodeId: string,
+    patches: unknown
+  ) => void;
+}) {
   const componentInfo: ComponentInfo =
     (value?.component ? components.get(value.component) : null) ??
     DEFAULT_COMPONENT_INFO;
@@ -178,7 +192,7 @@ function fallbackRender({ error }: FallbackProps) {
   );
 }
 
-export function Editor({ children }: EditorProps) {
+export function Editor({ children, sx }: EditorProps) {
   const canvasRef = React.useRef<HTMLDivElement>(null);
 
   const [nodeTree, setNodeTree] = React.useState<readonly MuiLiveNode[]>([]);
@@ -187,10 +201,9 @@ export function Editor({ children }: EditorProps) {
   );
 
   React.useEffect(() => {
-    invariant(
-      canvasRef.current,
-      "canvasRef should be assigned to a div element"
-    );
+    if (!canvasRef.current) {
+      return;
+    }
 
     const observer = new MutationObserver(() => {
       invariant(
@@ -250,17 +263,64 @@ export function Editor({ children }: EditorProps) {
 
   const outerTheme = useTheme();
 
+  const frameRef = React.useRef<HTMLIFrameElement>(null);
+
+  const saveNodeProperties = React.useCallback(
+    (moduleId: string, nodeId: string, patches: unknown) => {
+      const contentWindow = frameRef.current?.contentWindow;
+      invariant(contentWindow, "contentWindow should be assigned");
+      contentWindow.postMessage(
+        { kind: "saveNodeProperties", moduleId, nodeId, patches },
+        "*"
+      );
+    },
+    []
+  );
+
+  React.useEffect(() => {
+    const contentWindow = frameRef.current?.contentWindow;
+    invariant(contentWindow, "contentWindow should be assigned");
+
+    const handleMessage = (event: MessageEvent) => {
+      switch (event.data.kind) {
+        case "ready": {
+          const interval = setInterval(() => {
+            const channel = new MessageChannel();
+            channel.port1.onmessage = (event) => {
+              const tree = event.data.result;
+              setNodeTree(tree);
+              console.log("received", event.data);
+            };
+            contentWindow.postMessage({ kind: "getNodeTree" }, "*", [
+              channel.port2,
+            ]);
+          }, 1000);
+          return () => clearInterval(interval);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    contentWindow.postMessage({ kind: "activate" }, "*");
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, []);
+
   return (
     <ThemeProvider theme={editorTheme}>
       <Box
         sx={{
           width: "100%",
           height: "100%",
+          ...sx,
           display: "flex",
           alignItems: "stretch",
         }}
       >
-        <Box sx={{ width: 200 }}>
+        <Box sx={{ width: 250, m: 1 }}>
           <RichTreeView
             items={nodeTree}
             getItemId={getItemId}
@@ -273,28 +333,41 @@ export function Editor({ children }: EditorProps) {
             }
           />
         </Box>
-        <Box ref={canvasRef} sx={{ flex: 1, overflow: "auto" }}>
-          <Box sx={{ position: "relative" }}>
-            <ThemeProvider theme={outerTheme}>
-              <ErrorBoundary fallbackRender={fallbackRender}>
-                {children}
-              </ErrorBoundary>
-            </ThemeProvider>
+        {BROWSER ? (
+          <Browser
+            defaultUrl="http://localhost:5001"
+            sx={{ flex: 1 }}
+            frameRef={frameRef}
+          />
+        ) : (
+          <Box ref={canvasRef} sx={{ flex: 1, overflow: "auto" }}>
+            <Box sx={{ position: "relative" }}>
+              <ThemeProvider theme={outerTheme}>
+                <ErrorBoundary fallbackRender={fallbackRender}>
+                  {children}
+                </ErrorBoundary>
+              </ThemeProvider>
 
-            <Box
-              sx={{
-                position: "absolute",
-                inset: "0 0 0 0",
-                overflow: "hidden",
-                pointerEvents: "none",
-              }}
-            >
-              {selectedItem ? <SelectionBox item={selectedItem} /> : null}
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: "0 0 0 0",
+                  overflow: "hidden",
+                  pointerEvents: "none",
+                }}
+              >
+                {selectedItem ? <SelectionBox item={selectedItem} /> : null}
+              </Box>
             </Box>
           </Box>
-        </Box>
-        <Box sx={{ width: 200 }}>
-          {selectedItem ? <NodeEditor value={selectedItem} /> : null}
+        )}
+        <Box sx={{ width: 250, m: 1 }}>
+          {selectedItem ? (
+            <NodeEditor
+              value={selectedItem}
+              saveNodeProperties={saveNodeProperties}
+            />
+          ) : null}
         </Box>
       </Box>
     </ThemeProvider>

@@ -18,8 +18,8 @@
     // "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    "rootDir": "runtime",
-    "outDir": "dist/runtime"
+    "rootDir": ".",
+    "outDir": "../dist/editor"
   },
-  "include": ["runtime"]
+  "include": ["."]
 }

@@ -43,6 +43,7 @@ type AttributeInfo =
   | {
       kind: "static";
       name: string;
+      valueAst: t.Expression;
     }
   | {
       kind: "dynamic";
@@ -57,30 +58,15 @@ interface NodeInfo {
   attributesInfo: AttributeInfo[];
 }
 
-function toMemberExpression(
-  jsxMemberExpression: t.JSXMemberExpression
-): t.MemberExpression {
-  if (t.isJSXIdentifier(jsxMemberExpression.object)) {
-    return t.memberExpression(
-      t.identifier(jsxMemberExpression.object.name),
-      t.identifier(jsxMemberExpression.property.name)
-    );
-  }
-  return t.memberExpression(
-    toMemberExpression(jsxMemberExpression.object),
-    t.identifier(jsxMemberExpression.property.name)
-  );
-}
-
 function getJsxTagName(
   nameNode: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName
 ): string {
   if (t.isJSXIdentifier(nameNode)) {
     return nameNode.name;
   } else if (t.isJSXMemberExpression(nameNode)) {
-    return `${getJsxTagName(nameNode.object)}.${nameNode.property}`;
+    return `${getJsxTagName(nameNode.object)}.${nameNode.property.name}`;
   } else if (t.isJSXNamespacedName(nameNode)) {
-    return `${nameNode.namespace}:${nameNode.name}`;
+    return `${nameNode.namespace}:${nameNode.name.name}`;
   } else {
     throw new Error("Unreachable code");
   }
@@ -103,12 +89,6 @@ function getStaticExpression(
   }
   if (t.isNullLiteral(expression)) {
     return expression;
-  }
-  if (t.isTemplateLiteral(expression)) {
-    const allPartsStatic = expression.quasis.every(
-      (part) => !!getStaticExpression(part)
-    );
-    return allPartsStatic ? expression : null;
   }
   if (t.isUnaryExpression(expression)) {
     return !!getStaticExpression(expression.argument) &&
@@ -150,6 +130,8 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
     }
   >();
 
+  const DEVTOOLS_SRC_ID = "/mui-live/reactDevtools";
+
   const extensions = [
     ".js",
     ".jsx",
@@ -163,6 +145,20 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
 
   return {
     name: "mui-live",
+
+    transformIndexHtml(html) {
+      html = html.replace(
+        "<head>",
+        `<head><script>
+          if (window !== window.top) {
+            var script = document.createElement('script');
+            script.src = ${JSON.stringify(DEVTOOLS_SRC_ID)};
+            document.write(script.outerHTML);
+          }
+        </script>`
+      );
+      return html;
+    },
 
     configureServer(server) {
       server.hot.on("mui-live:save-properties", async (data, client) => {
@@ -212,6 +208,13 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
 
     configResolved(resolvedConfig) {
       config = resolvedConfig;
+    },
+
+    async resolveId(source, importer, options) {
+      if (source === DEVTOOLS_SRC_ID) {
+        return this.resolve("mui-live/reactDevtools", importer, options);
+      }
+      return null;
     },
 
     async load(id) {
@@ -292,11 +295,15 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       const astOut = t.cloneNode(astIn);
 
       const runtimeImport = template(
-        `import * as RUNTIME_LOCAL_NAME from "mui-live/runtime/internal";`,
+        `import * as RUNTIME_LOCAL_NAME from "mui-live/runtime";`,
         {
           sourceType: "module",
         }
       );
+
+      const runtimeInitCall = template(`RUNTIME_LOCAL_NAME.init(MODULE_ID);`, {
+        sourceType: "module",
+      });
 
       let runtimeLocalNameIdentifier: t.Identifier | undefined;
       let moduleIdIdentifier: t.Identifier | undefined;
@@ -320,6 +327,14 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
               RUNTIME_LOCAL_NAME: runtimeLocalNameIdentifier,
             })
           );
+
+          path.pushContainer(
+            "body",
+            runtimeInitCall({
+              RUNTIME_LOCAL_NAME: runtimeLocalNameIdentifier,
+              MODULE_ID: moduleIdIdentifier,
+            })
+          );
         },
         JSXElement(elmPath) {
           invariant(moduleIdIdentifier, "moduleIdIdentifier is not defined");
@@ -332,7 +347,6 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
           const nodeInfoIdentifier = programScope.generateUidIdentifier(nodeId);
 
           const nodeInfo = nodesInfo.get(nodeId);
-          nodeInfo?.attributesInfo;
           invariant(nodeInfo, `No info found for node "${nodeId}"`);
 
           programScope.push({
@@ -353,6 +367,14 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
                         t.identifier("kind"),
                         t.stringLiteral(attrInfo.kind)
                       ),
+                      ...(attrInfo.kind === "static"
+                        ? [
+                            t.objectProperty(
+                              t.identifier("value"),
+                              attrInfo.valueAst
+                            ),
+                          ]
+                        : []),
                       ...(attrInfo.kind === "static" ||
                       attrInfo.kind === "dynamic"
                         ? [

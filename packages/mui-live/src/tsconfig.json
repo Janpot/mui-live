@@ -10,8 +10,8 @@
     "strict": true,
     "strictNullChecks": true,
     "esModuleInterop": true,
-    "rootDir": "src",
-    "outDir": "dist/plugin"
+    "rootDir": ".",
+    "outDir": "../dist/plugin"
   },
-  "include": ["src"]
+  "include": ["."]
 }

@@ -11,7 +11,11 @@ function App() {
   return (
     <Container>
       <div
-        style={{ display: "flex", marginTop: null, flexDirection: "column" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+        }}
       >
         <Typography variant="h3">Test</Typography>
         <Box sx={{ height: 301 }}>

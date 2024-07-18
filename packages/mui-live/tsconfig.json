@@ -3,8 +3,9 @@
     "composite": true
   },
   "references": [
-    { "path": "./tsconfig.plugin.json" },
-    { "path": "./tsconfig.runtime.json" }
+    { "path": "./src/tsconfig.json" },
+    { "path": "./editor/tsconfig.json" },
+    { "path": "./runtime/tsconfig.json" }
   ],
   "include": []
 }

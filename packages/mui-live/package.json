@@ -3,8 +3,9 @@
   "version": "0.0.4",
   "type": "module",
   "scripts": {
-    "dev": "tsc --build --watch --preserveWatchOutput",
-    "build": "tsc --build"
+    "dev": "pnpm build:devtools && tsc --build --watch --preserveWatchOutput",
+    "build": "pnpm build:devtools && tsc --build",
+    "build:devtools": "tsup --entry.reactDevtools ./reactDevtools/index.ts --format iife"
   },
   "dependencies": {
     "@babel/core": "^7.24.6",
@@ -20,7 +21,8 @@
     "react": "^18.3.1",
     "react-devtools-inline": "^5.2.0",
     "react-dom": "^18.3.1",
-    "react-error-boundary": "^4.0.13"
+    "react-error-boundary": "^4.0.13",
+    "tsup": "^8.1.2"
   },
   "peerDependencies": {
     "@mui/material": "^5.15.18",
@@ -47,9 +49,16 @@
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js"
     },
-    "./runtime/*": {
-      "types": "./dist/runtime/*.d.ts",
-      "import": "./dist/runtime/*.js"
+    "./reactDevtools": {
+      "default": "./dist/reactDevtools.global.js"
+    },
+    "./editor": {
+      "types": "./dist/editor/index.d.ts",
+      "import": "./dist/editor/index.js"
+    },
+    "./editor/*": {
+      "types": "./dist/editor/*.d.ts",
+      "import": "./dist/editor/*.js"
     }
   },
   "packageManager": "pnpm@8.7.0"
