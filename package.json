@@ -1,5 +1,5 @@
 {
-  "name": "mui-live",
+  "name": "pimento-project",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -8,8 +8,8 @@
     "build": "pnpm run -r build",
     "eslint": "eslint .",
     "release": "pnpm install && pnpm build && pnpm publish -r",
-    "cli:prod": "pnpm --filter mui-live run cli:prod",
-    "cli:dev": "pnpm --filter mui-live run cli:dev"
+    "cli:prod": "pnpm --filter pimento run cli:prod",
+    "cli:dev": "pnpm --filter pimento run cli:dev"
   },
   "dependencies": {
     "@eslint/js": "^9.8.0"
@@ -24,5 +24,5 @@
     "typescript": "5.5.4",
     "typescript-eslint": "^8.0.1"
   },
-  "packageManager": "pnpm@9.1.3"
+  "packageManager": "pnpm@9.7.0"
 }

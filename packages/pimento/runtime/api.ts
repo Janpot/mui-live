@@ -15,5 +15,5 @@ export async function saveNodeProperties(
   const hot = import.meta.hot;
 
   console.log("sending");
-  hot.send("mui-live:save-properties", { nodeId, moduleId, patches });
+  hot.send("pimento:save-properties", { nodeId, moduleId, patches });
 }

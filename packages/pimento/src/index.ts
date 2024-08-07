@@ -118,7 +118,9 @@ export interface LiveOptions {
   include?: string[];
 }
 
-export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
+export default function pimento({
+  include = ["src"],
+}: LiveOptions = {}): Plugin {
   let config: ResolvedConfig | undefined;
 
   const moduleMap = new Map<
@@ -130,7 +132,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
     }
   >();
 
-  const DEVTOOLS_SRC_ID = "/mui-live/reactDevtools";
+  const DEVTOOLS_SRC_ID = "/pimento/reactDevtools";
 
   const extensions = [
     ".js",
@@ -144,7 +146,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
   ];
 
   return {
-    name: "mui-live",
+    name: "pimento",
 
     transformIndexHtml(html) {
       html = html.replace(
@@ -161,7 +163,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
     },
 
     configureServer(server) {
-      server.hot.on("mui-live:save-properties", async (data, client) => {
+      server.hot.on("pimento:save-properties", async (data, client) => {
         const moduleId = data.moduleId;
         const nodeId = data.nodeId;
         const module = moduleMap.get(moduleId);
@@ -200,7 +202,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       return {
         resolve: {
           alias: {
-            // "@mui/live/runtime": path.resolve(__dirname, "../runtime"),
+            // "pimento/runtime": path.resolve(__dirname, "../runtime"),
           },
         },
       };
@@ -212,7 +214,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
 
     async resolveId(source, importer, options) {
       if (source === DEVTOOLS_SRC_ID) {
-        return this.resolve("mui-live/reactDevtools", importer, options);
+        return this.resolve("pimento/reactDevtools", importer, options);
       }
       return null;
     },
@@ -295,7 +297,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
       const astOut = t.cloneNode(astIn);
 
       const runtimeImport = template(
-        `import * as RUNTIME_LOCAL_NAME from "mui-live/runtime";`,
+        `import * as RUNTIME_LOCAL_NAME from "pimento/runtime";`,
         {
           sourceType: "module",
         }
@@ -395,7 +397,7 @@ export default function live({ include = ["src"] }: LiveOptions = {}): Plugin {
             .get("openingElement")
             .pushContainer("attributes", [
               t.jsxAttribute(
-                t.jsxIdentifier("data-live-node"),
+                t.jsxIdentifier("data-pimento-node"),
                 t.jsxExpressionContainer(nodeInfoIdentifier)
               ),
             ]);

@@ -1,5 +1,5 @@
 {
-  "name": "mui-live",
+  "name": "pimento",
   "version": "0.0.5",
   "type": "module",
   "scripts": {
@@ -58,14 +58,6 @@
     },
     "./reactDevtools": {
       "default": "./dist/reactDevtools.global.js"
-    },
-    "./editor": {
-      "types": "./dist/editor/index.d.ts",
-      "import": "./dist/editor/index.js"
-    },
-    "./editor/*": {
-      "types": "./dist/editor/*.d.ts",
-      "import": "./dist/editor/*.js"
     }
   },
   "packageManager": "pnpm@8.7.0"

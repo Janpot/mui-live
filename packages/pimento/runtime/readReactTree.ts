@@ -1,5 +1,7 @@
 import type { FiberNode, FiberRootNode } from "react-devtools-inline";
-import { AttributeInfo, MuiLiveNodeAttribute } from "./internal";
+import { AttributeInfo, MuiLiveNodeAttribute } from "./types";
+
+let nextDomId = 1;
 
 declare module "react-devtools-inline" {
   interface FiberNode {
@@ -64,58 +66,71 @@ function findFiberRoot(): FiberRootNode {
 export interface MuiLiveNode {
   id: string;
   parent: null | MuiLiveNode;
-  fiber: FiberNode;
   nodeId: string;
   moduleId: string;
-  outerElm: Element | null;
+  outerElm: number | null;
   children: MuiLiveNode[];
   jsxTagName: string;
-  component: string | React.ComponentType | null;
+  component: string | null;
   props: Record<string, unknown>;
   attributes: AttributeInfo[];
 }
 
-export function readReactTree(elm: HTMLElement): readonly MuiLiveNode[] {
+const domIdMap = new WeakMap<Element, number>();
+
+export function readReactTree(): readonly MuiLiveNode[] {
   const fiberRoot = findFiberRoot();
 
-  const elmFiber = findFiber(
-    fiberRoot.current,
-    (fiber) => fiber.stateNode === elm
-  );
+  const elmFiber = fiberRoot.current.child;
 
   if (!elmFiber) {
     throw new Error("Can't find the root fiber for the given element");
   }
+
+  console.log(elmFiber);
 
   const root: MuiLiveNode[] = [];
 
   let currentNode: MuiLiveNode | null = null;
 
   const seen = new Set<string>();
+  const nodeFibers = new Map<MuiLiveNode, FiberNode>();
   walkFiberTree(elmFiber, {
     enter: (fiber) => {
       const props = fiber.memoizedProps;
-      const liveNodeAttribute = props?.["data-live-node"] as
+      const liveNodeAttribute = props?.["data-pimento-node"] as
         | MuiLiveNodeAttribute
         | undefined;
 
       if (liveNodeAttribute) {
-        const { moduleId, nodeId } = liveNodeAttribute;
+        const { moduleId, nodeId, jsxTagName } = liveNodeAttribute;
 
         const seenId = `${nodeId}-${moduleId}`;
         if (!seen.has(seenId)) {
           seen.add(seenId);
 
-          const newNode = {
+          const props = Object.assign(
+            {},
+            ...liveNodeAttribute.attributes.map((attr) => {
+              if (attr.kind === "static") {
+                return { [attr.name]: attr.value };
+              }
+            })
+          );
+
+          const newNode: any = {
             id: seenId,
             parent: currentNode,
-            fiber,
             outerElm: null,
             children: [],
-            component: fiber.type,
+            component: typeof fiber.type === "string" ? fiber.type : null,
             props,
-            ...liveNodeAttribute,
+            moduleId,
+            nodeId,
+            jsxTagName,
           };
+
+          nodeFibers.set(newNode, fiber);
 
           (currentNode?.children ?? root).push(newNode);
 
@@ -129,11 +144,19 @@ export function readReactTree(elm: HTMLElement): readonly MuiLiveNode[] {
         fiber.stateNode &&
         fiber.stateNode instanceof Element
       ) {
-        currentNode.outerElm = fiber.stateNode;
+        let domId = domIdMap.get(fiber.stateNode);
+
+        if (domId === undefined) {
+          domId = nextDomId;
+          nextDomId += 1;
+          domIdMap.set(fiber.stateNode, domId);
+        }
+
+        currentNode.outerElm = domId;
       }
     },
     exit: (fiber) => {
-      if (currentNode?.fiber === fiber) {
+      if (currentNode && nodeFibers.get(currentNode) === fiber) {
         currentNode = currentNode?.parent ?? null;
       }
     },

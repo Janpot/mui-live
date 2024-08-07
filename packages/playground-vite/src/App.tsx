@@ -10,7 +10,7 @@ const ROWS = [
 function App() {
   return (
     <Container>
-      <div style={{ display: "flex", flexDirection: "column" }}>
+      <div style={{ flexDirection: "column", display: "flex" }}>
         <Typography variant="h3">Test</Typography>
         <Box sx={{ height: 301 }}>
           <DataGrid

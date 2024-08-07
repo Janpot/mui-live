@@ -37,7 +37,7 @@ importers:
         specifier: ^8.0.1
         version: 8.0.1(eslint@9.8.0)(typescript@5.5.4)
 
-  packages/mui-live:
+  packages/pimento:
     dependencies:
       '@babel/core':
         specifier: ^7.24.6
@@ -151,9 +151,9 @@ importers:
       invariant:
         specifier: ^2.2.4
         version: 2.2.4
-      mui-live:
+      pimento:
         specifier: workspace:*
-        version: link:../mui-live
+        version: link:../pimento
       react:
         specifier: ^18.3.1
         version: 18.3.1
