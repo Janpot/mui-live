@@ -4,16 +4,21 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm build:devtools && tsc --build --watch --preserveWatchOutput",
-    "build": "pnpm build:devtools && tsc --build",
-    "build:devtools": "tsup --entry.reactDevtools ./reactDevtools/index.ts --format iife"
+    "build:devtools": "tsup --entry.reactDevtools ./reactDevtools/index.ts --format iife",
+    "build": "pnpm build:devtools && vite build ./editor && tsc --build",
+    "cli:prod": "./cli.js",
+    "cli:dev": "vite ./editor"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
     "@babel/core": "^7.24.6",
     "@babel/generator": "^7.24.6",
     "@babel/parser": "^7.24.6",
     "@mui/base": "5.0.0-beta.40",
     "@mui/icons-material": "^5.15.19",
     "@mui/x-tree-view": "^7.7.0",
+    "@vitejs/plugin-react": "^4.3.0",
     "invariant": "^2.2.4",
     "just-diff": "^6.0.2",
     "minimatch": "^9.0.4",
@@ -37,9 +42,11 @@
     "@types/react": "^18.3.3",
     "@types/react-devtools-inline": "^4.24.8",
     "@types/react-dom": "^18.3.0",
+    "@types/react-reconciler": "^0.28.8",
     "typescript": "5.5.0-dev.20240602",
     "vite": "^5.2.12"
   },
+  "bin": "./cli.js",
   "exports": {
     ".": {
       "types": "./dist/plugin/index.d.ts",

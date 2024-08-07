@@ -4,8 +4,9 @@
   },
   "references": [
     { "path": "./src/tsconfig.json" },
-    { "path": "./editor/tsconfig.json" },
-    { "path": "./runtime/tsconfig.json" }
+    { "path": "./runtime/tsconfig.json" },
+    { "path": "./cli/tsconfig.json" }
   ],
+  "files": [],
   "include": []
 }

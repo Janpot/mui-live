@@ -1,30 +1,29 @@
-# React + TypeScript + Vite
+# mui-live
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Visual CSS editor.
 
-Currently, two official plugins are available:
+1. Install
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+   ```sh
+   pnpm add mui-live
+   ```
 
-## Expanding the ESLint configuration
+1. Add the plugin to your vite config
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+   ```tsx
+   export default defineConfig({
+     // ...
+     plugins: [react(), live()],
+     // ...
+   });
+   ```
 
-- Configure the top-level `parserOptions` property like this:
+1. Run your application
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+1. Open the mui-live browser
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+   ```sh
+   pnpm dlx mui-live
+   ```
+
+1. Visit your application in the browser

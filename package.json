@@ -7,7 +7,9 @@
     "dev": "FORCE_COLOR=1 pnpm run -r --parallel dev",
     "build": "pnpm run -r build",
     "eslint": "eslint .",
-    "release": "pnpm install && pnpm build && pnpm publish -r"
+    "release": "pnpm install && pnpm build && pnpm publish -r",
+    "cli:prod": "pnpm --filter mui-live run cli:prod",
+    "cli:dev": "pnpm --filter mui-live run cli:dev"
   },
   "dependencies": {
     "@eslint/js": "^9.7.0"

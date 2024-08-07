@@ -1,10 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { Editor, registerComponent } from "mui-live/editor";
-import { ColumnsEditor } from "mui-live/editor/x-data-grid";
 import { DataGrid } from "@mui/x-data-grid";
 import { CssBaseline, Typography } from "@mui/material";
-import StyleEditor from "mui-live/editor/StyleEditor";
+
+import { Editor, registerComponent } from "./Editor";
+
+import { ColumnsEditor } from "./x-data-grid";
+import StyleEditor from "./StyleEditor";
 
 registerComponent(DataGrid, {
   properties: {
