@@ -10,7 +10,7 @@ window.addEventListener("message", async (event) => {
       break;
     }
     case "getNodeTree": {
-      const nodeTree = readReactTree(document.body);
+      const nodeTree = readReactTree();
       event.ports[0].postMessage({ result: nodeTree });
       break;
     }

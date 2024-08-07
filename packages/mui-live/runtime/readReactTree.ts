@@ -78,10 +78,8 @@ export interface MuiLiveNode {
 
 const domIdMap = new WeakMap<Element, number>();
 
-export function readReactTree(elm: HTMLElement): readonly MuiLiveNode[] {
+export function readReactTree(): readonly MuiLiveNode[] {
   const fiberRoot = findFiberRoot();
-
-  console.log("jo", fiberRoot.current.stateNode);
 
   const elmFiber = fiberRoot.current.child;
 
