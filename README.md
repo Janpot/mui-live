@@ -2,6 +2,8 @@
 
 Visual CSS editor.
 
+Visually edit your live vite application, automatically writes updates back to your code files.
+
 1. Install
 
    ```sh
